@@ -57,7 +57,7 @@ class SingleExtractorOrchestrator(Orchestrator):
         df = self.transformer.process(df)
         return self.loader.save(df)
 
-class MultipleExtractorOrchestrator(Orchestrator):
+class MultipleExtractOrchestrator(Orchestrator):
     def __init__(
         self,
         extractor: DelegatingExtractor,
@@ -132,7 +132,7 @@ class OrchestratorBuilder(Orchestrator):
             transformerObject = self.transformers[0] if lt == 1 else DelegatingMultiInputTransformer(self.transformers)
             loaderObject = self.loaders[0] if ll == 1 else DelegatingLoader(self.loaders)
 
-            return MultipleExtractorOrchestrator(extractorObject, transformerObject, loaderObject)
+            return MultipleExtractOrchestrator(extractorObject, transformerObject, loaderObject)
         else:
             raise LogicError(
                 f"No supported orchestrator for "
