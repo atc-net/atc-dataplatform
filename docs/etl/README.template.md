@@ -146,3 +146,34 @@ It is important that the first transformer is a `MultiInputTransformer` when hav
 ```
 {multi_multi_example}
 ```
+
+### Example-7
+
+In some cases a single destination dataset is not sufficient, as seen in this example.
+Here we need to use the full power of the EtlBase class to return multiple datasets that
+are then loaded by separate loaders.
+
+Note that setting a key in the loader constructor allows it to pick out only one of the
+inputs to save.
+
+```
+{many_to_many_example}
+```
+
+Result:
+```
+Orders ready to dispatch:
++--------+----------+---------+-----+--------------+
+|order_id|payment_id|  product|price|charged_amount|
++--------+----------+---------+-----+--------------+
+|       2|        46|Telescope|  200|           200|
+|       1|        45|   Guitar|   50|            50|
++--------+----------+---------+-----+--------------+
+
+Orders that need follow-up:
++--------+----------+-------+-----+--------------+
+|order_id|payment_id|product|price|charged_amount|
++--------+----------+-------+-----+--------------+
+|       3|        47| Tablet|  100|           150|
++--------+----------+-------+-----+--------------+
+```
