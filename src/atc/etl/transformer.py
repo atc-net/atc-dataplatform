@@ -2,7 +2,8 @@ from abc import abstractmethod
 
 from pyspark.sql import DataFrame
 
-from .types import dataset_group, EtlBase
+from .types import dataset_group
+from .etl import EtlBase
 
 
 class Transformer(EtlBase):
@@ -28,8 +29,8 @@ class Transformer(EtlBase):
 
     @abstractmethod
     def process(self, df: DataFrame) -> DataFrame:
-        return df
+        raise NotImplementedError()
 
     @abstractmethod
     def process_many(self, datasets: dataset_group) -> DataFrame:
-        pass
+        raise NotImplementedError()

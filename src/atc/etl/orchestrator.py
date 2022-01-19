@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Union
 
 from pyspark.sql import DataFrame
 
-from .types import EtlBase, dataset_group
+from .types import dataset_group
+from .etl import EtlBase
 
 
 class Orchestrator:
@@ -24,11 +25,16 @@ class Orchestrator:
     transform_with = step
     load_into = step
 
-    def execute(self) -> DataFrame:
+    def execute(self) -> Union[DataFrame, None]:
         datasets: dataset_group = {}
         for step in self.steps:
             datasets = step.etl(datasets)
 
         if len(datasets) == 1:
             return next(iter(datasets.values()))
-        raise AssertionError("Multiple datasets in play at the end of orchestration.")
+        if not len(datasets):
+            return None
+        else:
+            raise AssertionError(
+                "Multiple datasets in play at the end of orchestration."
+            )

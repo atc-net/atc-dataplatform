@@ -2,7 +2,8 @@ from abc import abstractmethod
 
 from pyspark.sql import DataFrame
 
-from .types import dataset_group, EtlBase
+from .types import dataset_group
+from .etl import EtlBase
 
 
 class Extractor(EtlBase):
@@ -28,4 +29,4 @@ class Extractor(EtlBase):
 
     @abstractmethod
     def read(self) -> DataFrame:
-        pass
+        raise NotImplementedError()
