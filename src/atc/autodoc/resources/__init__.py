@@ -1,8 +1,10 @@
 import atexit
 import importlib.resources
+from functools import lru_cache
 
 
 def get_resource_icon(resource_name):
+    @lru_cache
     def get_icon():
         resource = importlib.resources.path(__name__, resource_name)
         path = resource.__enter__()
