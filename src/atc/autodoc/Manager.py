@@ -1,5 +1,3 @@
-from diagrams import Diagram
-
 from atc.autodoc import NodeProxyRegistry, EtlRegistry
 from atc.autodoc.JobRegistry import JobRegistry
 from atc.singleton import Singleton
@@ -11,11 +9,15 @@ class Manager(metaclass=Singleton):
         self.nodes = NodeProxyRegistry()
         self.etls = EtlRegistry()
 
+        import diagrams
+
+        self.diagrams = diagrams
+
     def create_total_diagram(self, title: str = None):
         # create total diagram
         self.nodes.reset_proxies()
         print(f"creating diagram for all nodes")
-        with Diagram(title or "Total Diagram", show=False):
+        with self.diagrams.Diagram(title or "Total Diagram", show=False):
             for prxy in self.nodes.proxies:
                 prxy.get_node()
 
@@ -24,7 +26,7 @@ class Manager(metaclass=Singleton):
         for etl in self.etls.etls.values():
             self.nodes.reset_proxies()
             print(f"creating diagram for single etl {etl.name}")
-            with Diagram(etl.name, show=False):
+            with self.diagrams.Diagram(etl.name, show=False):
                 etl.get_node()
 
     def create_job_diagrams(self):
@@ -32,5 +34,5 @@ class Manager(metaclass=Singleton):
         self.nodes.reset_proxies()
         for job in self.jobs.jobs:
             print(f"creating job diagram for {job.name}")
-            with Diagram(job.name, show=False):
+            with self.diagrams.Diagram(job.name, show=False):
                 job.get_node()

@@ -1,6 +1,3 @@
-from diagrams import Edge, Node
-from diagrams.custom import Custom
-
 from .EtlRegistry import EtlRegistry
 from .JobRegistry import JobRegistry
 from .NodeProxy import NodeProxy
@@ -17,7 +14,10 @@ class Job(NodeProxy):
         self.steps.append(etl)
         return self
 
-    def create_node(self) -> Node:
+    def create_node(self) -> "Node":
+        from diagrams.custom import Custom
+        from diagrams import Edge
+
         node = Custom(self.name, job_icon())
 
         for step_no, etl in enumerate(self.steps):

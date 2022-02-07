@@ -17,7 +17,7 @@ Create files like
 ```
 
 ```
-{GuitarOrchestrator}
+{job}
 ```
 
 then finally execute them like this:

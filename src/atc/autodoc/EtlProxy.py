@@ -1,7 +1,5 @@
 from typing import List
 
-from diagrams import Node
-from diagrams.custom import Custom
 
 from .DataLake import DataLake
 from .NodeProxy import NodeProxy
@@ -15,7 +13,9 @@ class EtlProxy(NodeProxy):
         self.inputs: List[DataLake] = []
         self.outputs: List[DataLake] = []
 
-    def create_node(self) -> Node:
+    def create_node(self) -> "Node":
+        from diagrams.custom import Custom
+
         node = Custom(self.name, etl_icon())
         for inpt in self.inputs:
             in_nd = inpt.get_node()

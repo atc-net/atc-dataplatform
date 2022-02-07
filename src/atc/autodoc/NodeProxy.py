@@ -1,7 +1,6 @@
 from abc import abstractmethod
 
 from .NodeProxyRegistry import NodeProxyRegistry
-from diagrams import Node
 
 
 class NodeProxy:
@@ -19,14 +18,14 @@ class NodeProxy:
         NodeProxyRegistry().register_proxy(self)
 
     @abstractmethod
-    def create_node(self) -> Node:
+    def create_node(self) -> "Node":
         raise NotImplementedError()
 
     def node_reset(self) -> None:
         """Resets the diagram Node so that a new one is created on the next call to get_node."""
         self._node = None
 
-    def get_node(self) -> Node:
+    def get_node(self) -> "Node":
         """Create the node according to the factory.
         If the node already exists, reuse it. This allows e.g. several transformations
         to reference the same table."""
