@@ -196,21 +196,26 @@ class CachedLoaderTests(unittest.TestCase):
         DbHandle("TestDb").drop_cascade()
 
     def test_01_can_perform_cached_write(self):
+        cache_dh = DeltaHandle.from_tc("CachedTest")
+        # prime the cache
+        df_old_cache = Spark.get().createDataFrame(
+            self.old_cache, schema=cache_dh.read().schema
+        )
+        cache_dh.overwrite(df_old_cache)
+
+        # prepare the new data
+        target_dh = DeltaHandle.from_tc("CachedTestTarget")
         df_new = Spark.get().createDataFrame(
-            self.new_data, schema=DeltaHandle.from_tc("CachedTestTarget").read().schema
+            self.new_data, schema=target_dh.read().schema
         )
 
+        # execute the system under test
         self.sut.save(df_new)
-        target = DeltaHandle.from_tc("CachedTestTarget").read()
-        target.show()
-        cache = (
-            DeltaHandle.from_tc("CachedTest")
-            .read()
-            .withColumn(
-                "isRecent",
-                (f.current_timestamp().cast("long") - f.col("loadedTime").cast("long"))
-                < 100,
-            )
+
+        cache = cache_dh.read().withColumn(
+            "isRecent",
+            (f.current_timestamp().cast("long") - f.col("loadedTime").cast("long"))
+            < 100,
         )
         cache.show()
 
@@ -238,10 +243,5 @@ class CachedLoaderTests(unittest.TestCase):
 
         # only row 8 was passed to be deleted. Check.
         del_cache = cache.filter(cache[self.sut.params.deletedTime].isNotNull())
-        del_ids = [row.a for row in del_cache.collect()]
-        self.assertEqual(
-            del_ids,
-            [
-                "8",
-            ],
-        )
+        (del_id,) = [row.a for row in del_cache.collect()]
+        self.assertEqual(del_id, "8")
