@@ -28,19 +28,23 @@ class CachedLoader(Loader):
         self.params = params
         self.validate()
 
-        self.n_rows_last_write = None
+        self.n_rows_all_writes = 0
+        self.n_rows_last_write = 0
 
     def validate(self):
         # validate cache table schema
         p = self.params
         df = Spark.get().table(p.cache_table_name)
         try:
+
             assert set(df.columns) == set(
                 p.key_cols + p.cache_id_cols + [p.rowHash, p.loadedTime, p.deletedTime]
             )
         except AssertionError:
             print(
-                "ERROR: The cache table needs to have precisely the correct schema",
+                "ERROR: The cache table needs to have precisely the correct schema."
+                " Found:",
+                df.columns,
                 file=sys.stderr,
             )
             raise
@@ -65,8 +69,8 @@ class CachedLoader(Loader):
         return df
 
     def save(self, df: DataFrame) -> None:
-
         in_cols = df.columns
+
         if not set(self.params.key_cols).issubset(in_cols):
             raise AssertionError(
                 "The key columns must be given in the input dataframe."
@@ -83,6 +87,7 @@ class CachedLoader(Loader):
         df_written = self.write_operation(result.to_be_written)
         if df_written:
             self.n_rows_last_write = df_written.count()
+            self.n_rows_all_writes += self.n_rows_last_write
 
             # this line only executes if the line above does not raise an exception.
             df_written_cache_update = self._prepare_written_cache_update(
@@ -125,8 +130,8 @@ class CachedLoader(Loader):
             *self.params.key_cols,
             f.hash(*columns_to_hash).alias(self.params.rowHash),
             f.current_timestamp().alias(self.params.loadedTime),
-            f.lit(None).cast("timestamp").alias(self.params.deletedTime)
-            * self.params.cache_id_cols,
+            f.lit(None).cast("timestamp").alias(self.params.deletedTime),
+            *self.params.cache_id_cols,
         )
 
     def _prepare_deleted_cache_update(self, df: DataFrame):
@@ -140,7 +145,10 @@ class CachedLoader(Loader):
 
     def _load_cache(self, cache_to_load: DataFrame) -> None:
 
-        view_name = self.params.cache_table_name + f"Update{randint(0, 1000):03}"
+        view_name = (
+            self.params.cache_table_name.replace(".", "_")
+            + f"_Update{randint(0, 1000):03}"
+        )
         merge_sql_statement = (
             f"MERGE INTO {self.params.cache_table_name} AS target "
             f"USING {view_name} as source "
@@ -191,17 +199,18 @@ class CachedLoader(Loader):
 
         # rows coming from the original df will have a non-null key column
         joined_df_incoming = joined_df.filter(
-            f"df.{self.params.key_cols[0]} IS NOT NULL"
+            f"{self.params.key_cols[0]} IS NOT NULL"
         ).select(
+            *self.params.key_cols,
             "df.*",
             "cache.loadedTime",
             (f.col("df.rowHash") == f.col("cache.rowHash")).alias("hashMatch"),
         )
 
-        # chached rows with no incoming match will have a null primary key
-        to_bo_deleted = joined_df.filter(
-            f"df.{self.params.key_cols[0]} IS NULL"
-        ).select("cache.*")
+        # cached rows with no incoming match will have a null primary key
+        to_be_deleted = joined_df.filter(f"{self.params.key_cols[0]} IS NULL").select(
+            *self.params.key_cols, "cache.*"
+        )
 
         # add a priority column
         now = datetime.now(timezone.utc).timestamp()
@@ -251,6 +260,6 @@ class CachedLoader(Loader):
         result.to_be_written = filtered_df.drop(
             "__cachePriority", "rowHash", "hashMatch", "loadedTime"
         )
-        result.to_be_deleted = to_bo_deleted
+        result.to_be_deleted = to_be_deleted
 
         return result

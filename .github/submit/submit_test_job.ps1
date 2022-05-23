@@ -108,7 +108,7 @@ $run = @{
         num_workers= 0
     }
     # in addition to standard dependencies, install the libs that we just uploaded
-    libraries= $spark_dependencies + $sparkWheels
+    libraries= $spark_dependencies + $sparkWheels + $testWheels
 
     # This scripts runs the test suite
     spark_python_task= @{
