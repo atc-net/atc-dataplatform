@@ -233,7 +233,7 @@ class CachedLoaderTests(unittest.TestCase):
         self.assertEqual(written_ids, {"1", "2"})
         # verify that this agrees with the current state of the cache:
         new_cache = cache.filter(f.col("isRecent"))
-        new_cache_ids = {row.a for row in new_cache}
+        new_cache_ids = {row.a for row in new_cache.collect()}
         self.assertEqual(new_cache_ids, {"1", "2"})
 
         # Section on deleting

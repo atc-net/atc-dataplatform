@@ -190,6 +190,9 @@ class CachedLoader(Loader):
         # prepare hash of row
         df_hashed = df_in.withColumn("rowHash", f.hash("*"))
 
+        # add a column to distinguish rows after the join
+        df_hashed = df_hashed.withColumn("fromPayload", f.lit(True))
+
         # join with cache
         joined_df = (
             df_hashed.alias("df")
@@ -197,19 +200,23 @@ class CachedLoader(Loader):
             .cache()
         )
 
-        # rows coming from the original df will have a non-null key column
-        joined_df_incoming = joined_df.filter(
-            f"{self.params.key_cols[0]} IS NOT NULL"
-        ).select(
-            *self.params.key_cols,
-            "df.*",
-            "cache.loadedTime",
-            (f.col("df.rowHash") == f.col("cache.rowHash")).alias("hashMatch"),
+        # rows coming from the original df will have a non-null fromPayload column
+        joined_df_incoming = (
+            joined_df.filter("fromPayload IS NOT NULL")
+            .select(
+                *self.params.key_cols,
+                "df.*",
+                "cache.loadedTime",
+                (f.col("df.rowHash") == f.col("cache.rowHash")).alias("hashMatch"),
+            )
+            .drop("fromPayload")
         )
 
-        # cached rows with no incoming match will have a null primary key
-        to_be_deleted = joined_df.filter(f"{self.params.key_cols[0]} IS NULL").select(
-            *self.params.key_cols, "cache.*"
+        # cached rows with no incoming match will have a null fromPayload column
+        to_be_deleted = (
+            joined_df.filter("fromPayload IS NULL")
+            .select(*self.params.key_cols, "cache.*")
+            .drop("fromPayload")
         )
 
         # add a priority column
