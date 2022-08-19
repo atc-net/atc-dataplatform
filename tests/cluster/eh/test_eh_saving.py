@@ -16,7 +16,23 @@ from .AtcEh import AtcEh
 class EventHubsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        TableConfigurator().clear_all_configurations()
+        tc = TableConfigurator()
+        tc.clear_all_configurations()
+        tc.register(
+            "AtcEh",
+            {
+                "name": "AtcEh",
+                "path": "/mnt/githubatc/silver/githubatc/atceh",
+                "format": "avro",
+                "partitioning": "ymd",
+            },
+        )
+
+    def test_01_read_empty_capture(self):
+        eh = EventHubCapture.from_tc("AtcEh")
+        df = eh.read()
+        self.assertEqual(0, df.count())
+        # we could read, there was just no data, yet
 
     def test_01_publish(self):
         eh = AtcEh()
@@ -33,12 +49,11 @@ class EventHubsTests(unittest.TestCase):
 
     def test_02_wait_for_capture_files(self):
         # wait until capture file appears
-        dbutils = init_dbutils()
 
         limit = datetime.now() + timedelta(minutes=10)
         while datetime.now() < limit:
-            conts = {item.name for item in dbutils.fs.ls("/mnt/githubatc/silver")}
-            if "githubatc/" in conts:
+            eh = EventHubCapture.from_tc("AtcEh")
+            if eh.read().count():
                 break
             else:
                 time.sleep(10)
@@ -49,16 +64,6 @@ class EventHubsTests(unittest.TestCase):
         self.assertTrue(True, "The capture file has appeared.")
 
     def test_03_read_eh_capture(self):
-        tc = TableConfigurator()
-        tc.register(
-            "AtcEh",
-            {
-                "name": "AtcEh",
-                "path": "/mnt/githubatc/silver/githubatc/atceh",
-                "format": "avro",
-                "partitioning": "ymd",
-            },
-        )
         eh = EventHubCapture.from_tc("AtcEh")
         df = eh.read()
 

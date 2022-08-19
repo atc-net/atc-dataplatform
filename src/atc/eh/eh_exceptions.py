@@ -9,5 +9,9 @@ class AtcEhInitException(AtcEhException):
     pass
 
 
+class AtcEhNoDataException(AtcEhInitException):
+    pass
+
+
 class AtcEhLogicException(AtcEhException):
     pass

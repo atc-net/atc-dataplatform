@@ -1,16 +1,28 @@
 import json
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Union
 
 from deprecated import deprecated
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as f
+from pyspark.sql.types import (
+    LongType,
+    StringType,
+    StructField,
+    StructType,
+    TimestampType,
+)
 from pyspark.sql.utils import AnalysisException
 
 from atc import dbg
 from atc.config_master import TableConfigurator
-from atc.eh.eh_exceptions import AtcEhInitException, AtcEhLogicException
+from atc.eh.eh_exceptions import (
+    AtcEhInitException,
+    AtcEhLogicException,
+    AtcEhNoDataException,
+)
 from atc.eh.PartitionSpec import PartitionSpec
 from atc.functions import init_dbutils
 from atc.spark import Spark
@@ -73,6 +85,12 @@ class EventHubCapture:
 
     def _create_table(self):
         """Create the external avro table"""
+        # Check for existence of base folder before initializing
+        # we do this because we don't want to write any data under
+        # any circumstances
+        if not Path("/dbfs" + self.path).exists():
+            raise AtcEhNoDataException("Table creation rejected until folder exists")
+
         avro_schema = {
             "namespace": "org.apache.hive",
             "name": "first_schema",
@@ -122,7 +140,7 @@ class EventHubCapture:
             # done looping over items.
             if partition.__getattribute__(c) is None:
                 # There is probably no data, yet.
-                raise AtcEhInitException(
+                raise AtcEhNoDataException(
                     f"unable to discover first partition at '{full_path}'"
                 )
 
@@ -212,8 +230,25 @@ class EventHubCapture:
         else:
             dbg("no partitions to add")
 
+    def schema(self) -> StructType:
+        """This is the schema of resulting tables when reading EventHub avro files"""
+        return StructType(
+            [
+                StructField("sequencenumber", LongType, True),
+                StructField("offset", StringType, True),
+                StructField("enqueuedtimeutc", StringType, True),
+                StructField("body", StringType, True),
+            ]
+            + [StructField(c, StringType, True) for c in self.partitioning]
+            + [StructField("pdate", TimestampType, True)]
+        )
+
     def read(self) -> DataFrame:
-        self._repair_partitioning()
+        try:
+            self._repair_partitioning()
+        except AtcEhNoDataException:
+            return Spark.get().createDataFrame([], self.schema())
+
         return (
             Spark.get()
             .table(self.name)
