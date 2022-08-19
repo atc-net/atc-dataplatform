@@ -1,5 +1,6 @@
 import json
 import os
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Union
@@ -89,6 +90,10 @@ class EventHubCapture:
         # we do this because we don't want to write any data under
         # any circumstances
         if not Path("/dbfs" + self.path).exists():
+            warnings.warn(
+                f"Capture folder at {self.path} not found. "
+                "External table creation skipped."
+            )
             raise AtcEhNoDataException("Table creation rejected until folder exists")
 
         avro_schema = {
@@ -140,6 +145,7 @@ class EventHubCapture:
             # done looping over items.
             if partition.__getattribute__(c) is None:
                 # There is probably no data, yet.
+                warnings.warn(f"No capture partition found at {self.path}")
                 raise AtcEhNoDataException(
                     f"unable to discover first partition at '{full_path}'"
                 )
@@ -234,13 +240,13 @@ class EventHubCapture:
         """This is the schema of resulting tables when reading EventHub avro files"""
         return StructType(
             [
-                StructField("sequencenumber", LongType, True),
-                StructField("offset", StringType, True),
-                StructField("enqueuedtimeutc", StringType, True),
-                StructField("body", StringType, True),
+                StructField("sequencenumber", LongType(), True),
+                StructField("offset", StringType(), True),
+                StructField("enqueuedtimeutc", StringType(), True),
+                StructField("body", StringType(), True),
             ]
-            + [StructField(c, StringType, True) for c in self.partitioning]
-            + [StructField("pdate", TimestampType, True)]
+            + [StructField(c, StringType(), True) for c in self.partitioning]
+            + [StructField("pdate", TimestampType(), True)]
         )
 
     def read(self) -> DataFrame:
