@@ -29,6 +29,8 @@ $dbDeploySpnName              = "AtcDbSpn"
 $cicdSpnName                  = "AtcGithubPipe"
 $cosmosName                   = $resourceName
 $keyVaultName                 = "atcGithubCiCd"
+$loganalyticsname             = $resourceName
+$appinsightname               = $resourceName
 
 $location                     = "westeurope"  # Use eastus because of free azure subscription
 $resourceTags = "{'Owner':'Auto Deployed', 'System':'ATC-NET','Service':'Data Platform'}" 

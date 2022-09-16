@@ -21,6 +21,8 @@ param allowUserIp string
 param sqlServerAdminUser string
 @secure()
 param sqlServerAdminPassword string
+param loganalyticsname string
+param appinsightname string
 
 // Creating permanent resource group
 module rgModule 'rg-permanent.bicep' = {
@@ -45,6 +47,8 @@ module resources 'resources-permanent.bicep' = {
     spnobjectid: spnobjectid
     tags: resourceTags
     dbname: cosmosName
+    loganalyticsname: loganalyticsname
+    appinsightname: appinsightname
   }
 }
 

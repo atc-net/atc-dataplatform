@@ -4,6 +4,9 @@ param devobjectid string
 param spnobjectid string
 param tags object
 param dbname string
+param loganalyticsname string
+param appinsightname string
+
 
 //#############################################################################################
 //# Provision Keyvault
@@ -62,5 +65,26 @@ resource csdb 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
       isZoneRedundant: false
       locationName: location
     }]
+  }
+}
+
+//#############################################################################################
+//# Provision Application Insights
+//#############################################################################################
+
+
+resource loganalytics 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
+  name: loganalyticsname
+  location: location
+
+}
+
+resource appinsight 'Microsoft.Insights/components@2020-02-02' = {
+  name: appinsightname
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: loganalytics.id
   }
 }

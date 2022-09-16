@@ -42,10 +42,14 @@ $output = az deployment sub create `
       deliveryDatabase=$deliveryDatabase `
       allowUserIp=$allowUserIp `
       sqlServerAdminUser=$sqlServerAdminUser `
-      sqlServerAdminPassword=$sqlServerAdminPassword # Should be secure string..
-      #sqlServerAdminPassword=(ConvertTo-SecureString -AsPlainText $sqlServerAdminPassword -Force)
+      sqlServerAdminPassword=$sqlServerAdminPassword `
+      loganalyticsname=$loganalyticsname `
+      appinsightname=$appinsightname
+ 
 
-Throw-WhenError -output $output
+
+Throw-WhenError -output $output 
+
 
 Write-Host "  Ressources deployed!" -ForegroundColor Green
 
