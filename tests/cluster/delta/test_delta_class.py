@@ -113,3 +113,51 @@ class DeltaTests(unittest.TestCase):
 
         with self.assertRaises(AnalysisException):
             dh.read()
+
+    def test_09_schema_ownership(self):
+        tc = TableConfigurator()
+        tc.register("MyDb09", dict(name="TestDb09", path="/tmp/testdb09", format="db"))
+        db = DbHandle.from_tc("MyDb09")
+        db.create()
+
+        Spark.get().sql(
+            """
+        CREATE TABLE TestDb09.testTbl
+        (
+          Id STRING,
+          Brand STRING,
+          Model STRING
+        )
+        USING DELTA
+        TBLPROPERTIES (delta.autoOptimize.autoCompact = true)
+        PARTITION BY (Id)
+        LOCATION "/tmp/testdb09/testTbl";
+        """
+        )
+
+        tc.register(
+            "MyTblId09", dict(name="TestDb09.testTbl", path="/tmp/testdb09/testTbl")
+        )
+        dh1 = DeltaHandle.from_tc("MyTblId09")
+        self.assertEqual(dh1.get_partitioning(), ["Id"])
+
+        tc.register(
+            "MyTblId092",
+            dict(
+                name="TestDb09.testTbl2",
+                path="/tmp/testdb09/testTbl2",
+                schema="""
+                        (
+                          Id STRING,
+                          Brand STRING,
+                          Model STRING
+                        )
+                        """,
+                partitioning=["Id"],
+                tblproperties={"delta.autoOptimize.autoCompact": "true"},
+            ),
+        )
+        dh2 = DeltaHandle.from_tc("MyTblId092")
+        dh2.create_hive_table()
+        df = dh2.read()
+        self.assertEqual(df.schema, dh1.read().schema)
