@@ -25,7 +25,7 @@ def add_odbc_driver():
             else:
                 raise
 
-    save_folder = "databricks/drivers/"
+    save_folder = "/dbfs/databricks/drivers/"
     driver_download_path = (
         "https://packages.microsoft.com/ubuntu"
         "/20.04/prod/pool/main/m/msodbcsql17/msodbcsql17_17.7.2.1-1_amd64.deb"
