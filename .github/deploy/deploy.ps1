@@ -62,6 +62,8 @@ Throw-WhenError -output $output
 
 Write-Host "  Ressources deployed!" -ForegroundColor Green
 
+Write-Host "Try to sleep for 10 minutes..."
+Start-Sleep -s 600
 
 $eventHubConnection = az eventhubs namespace authorization-rule keys list `
   --resource-group $resourceGroupName `
@@ -79,5 +81,3 @@ Get-ChildItem "$PSScriptRoot/steps" -Filter *.ps1 | Sort-Object name | Foreach-O
   . ("$_")
 }
 
-Write-Host "Try to sleep..."
-Start-Sleep -s 300
