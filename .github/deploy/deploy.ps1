@@ -78,3 +78,6 @@ $secrets.addSecret("EventHubConnection", $eventHubConnection)
 Get-ChildItem "$PSScriptRoot/steps" -Filter *.ps1 | Sort-Object name | Foreach-Object {
   . ("$_")
 }
+
+Write-Host "Try to sleep..."
+Start-Sleep -s 300
