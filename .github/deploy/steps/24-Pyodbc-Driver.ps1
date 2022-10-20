@@ -12,8 +12,6 @@ if(-Not (Test-Path $odbcSaveLocation)){
 
 dbfs cp --overwrite $odbcSaveLocation dbfs:/databricks/drivers/msodbcsql17_amd64.deb
 
-Set-DatabricksGlobalInitScript `
-  -workspaceUrl $workspaceUrl `
-  -bearerToken $accessToken `
-  -initScriptName "pyodbc-driver" `
-  -initScriptContent (Get-Content "$PSScriptRoot/../drivers/pyodbc-driver.sh" -Raw)
+# install driver as in example:
+# https://learn.microsoft.com/en-us/azure/databricks/clusters/init-scripts#example-install-postgresql-jdbc-driver
+dbfs cp --overwrite "$PSScriptRoot/../drivers/pyodbc-driver.sh" "dbfs:/databricks/scripts/pyodbc-driver.sh"
