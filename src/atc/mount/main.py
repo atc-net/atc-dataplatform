@@ -1,9 +1,46 @@
 import argparse
 import json
+import urllib.request
 from types import SimpleNamespace
 
 from atc.atc_exceptions import AtcException
 from atc.functions import init_dbutils
+
+
+def add_odbc_driver():
+    """
+    This function download the ODBC driver to databricks/drivers.
+    """
+
+    def file_exists(path: str):
+        """
+        Helper function to check whether a file or folder exists.
+        """
+        try:
+            init_dbutils().fs.ls(path)
+            return True
+        except Exception as e:
+            if "java.io.FileNotFoundException" in str(e):
+                return False
+            else:
+                raise
+
+    save_folder = "databricks/drivers/"
+    driver_download_path = (
+        "https://packages.microsoft.com/ubuntu"
+        "/20.04/prod/pool/main/m/msodbcsql17/msodbcsql17_17.7.2.1-1_amd64.deb"
+    )
+    driver_save_location = save_folder + "msodbcsql17_amd64.deb"
+
+    if not file_exists(save_folder):
+        init_dbutils().fs.mkdirs(save_folder)
+
+    urllib.request.urlretrieve(driver_download_path, driver_save_location)
+
+    if not file_exists(driver_save_location):
+        raise ValueError(f"Driver could not be found in {driver_save_location}")
+
+    print(f"ODBC driver saved to: {driver_save_location}")
 
 
 def main():
@@ -90,4 +127,10 @@ def main():
 
 
 if __name__ == "__main__":
+    print("Running mounting main...")
     main()
+    print("Finished mounting main!")
+
+    print("Adding ODBC driver...")
+    add_odbc_driver()
+    print("Finished adding ODBC driver!")
