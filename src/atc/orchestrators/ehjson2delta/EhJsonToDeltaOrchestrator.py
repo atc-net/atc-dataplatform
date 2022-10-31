@@ -1,3 +1,5 @@
+import deprecation
+
 from atc.delta import DeltaHandle
 from atc.eh.EventHubCaptureExtractor import EventHubCaptureExtractor
 from atc.etl import EtlBase, Orchestrator
@@ -8,6 +10,7 @@ from atc.orchestrators.ehjson2delta.EhJsonToDeltaTransformer import (
 )
 
 
+@deprecation.deprecated(details="Currently in preview.")
 class EhJsonToDeltaOrchestrator(Orchestrator):
     def __init__(self, eh: EventHubCaptureExtractor, dh: DeltaHandle):
         super().__init__()
