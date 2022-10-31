@@ -2,6 +2,7 @@ from datetime import datetime as dt
 from datetime import timezone
 from typing import List, Optional
 
+import deprecation
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as f
 
@@ -12,6 +13,7 @@ from atc.etl import Extractor
 from atc.spark import Spark
 
 
+@deprecation.deprecated(details="Currently in preview.")
 class EhJsonToDeltaExtractor(Extractor):
     """
     This extractor has a side effect on the delta table!

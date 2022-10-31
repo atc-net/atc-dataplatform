@@ -1,3 +1,4 @@
+import deprecation
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as f
 
@@ -6,6 +7,7 @@ from atc.eh import EventHubCaptureExtractor
 from atc.etl import Transformer
 
 
+@deprecation.deprecated(details="Currently in preview.")
 class EhJsonToDeltaTransformer(Transformer):
     def __init__(self, eh: EventHubCaptureExtractor, target_dh: DeltaHandle):
         super().__init__()
