@@ -26,15 +26,15 @@ class DeltaTests(unittest.TestCase):
         tc.register(
             "MyTbl",
             {
-                "name": "TestDb{ID}.TestTbl",
-                "path": "{storageAccount}/testdb{ID}/testtbl",
+                "name": "{MyDb}.TestTbl",
+                "path": "{MyDb_path}/testtbl",
             },
         )
 
         tc.register(
             "MyTbl2",
             {
-                "name": "TestDb{ID}.TestTbl2",
+                "name": "{MyDb}.TestTbl2",
             },
         )
 
@@ -70,6 +70,15 @@ class DeltaTests(unittest.TestCase):
         dh.append(df, mergeSchema=True)
 
     def test_03_create(self):
+        print(Configurator().get_all_details())
+        print(
+            {
+                k: v[:-15] + v[-12:]
+                for k, v in Spark.get().sparkContext.getConf().getAll()
+                if k.startswith("fs.azure.account")
+            }
+        )
+
         db = DbHandle.from_tc("MyDb")
         db.create()
 
