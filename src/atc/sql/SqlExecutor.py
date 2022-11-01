@@ -54,12 +54,4 @@ class SqlExecutor:
                 with open(file_path) as file:
                     conts = file.read()
                     sql_code = conts.format(**replacements)
-                    for statement in sql_code.split(";"):
-                        cleaned_statement = ""
-                        for line in statement.splitlines(keepends=True):
-                            if line.lstrip().startswith("-- "):
-                                continue
-                            elif line.strip():
-                                cleaned_statement += line
-                        if cleaned_statement:
-                            executor.sql(statement)
+                    executor.sql(sql_code)
