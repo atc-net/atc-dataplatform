@@ -11,3 +11,4 @@
   "fs.azure.account.oauth2.client.endpoint.$resourceName.dfs.core.windows.net": "{{ secrets/secrets/DatabricksOauthEndpoint }}"
 }
 TODO: fix the resource name. Not possible in this json
+UPDATE: See 20-Create-SparkConf.ps1
