@@ -8,24 +8,26 @@ from atc.etl import Orchestrator
 from atc.etl.extractors import SimpleExtractor
 from atc.etl.loaders import SimpleLoader
 from atc.spark import Spark
+from tests.cluster.config import InitConfigurator
 
 
 class DeltaTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        Configurator().clear_all_configurations()
+        InitConfigurator(clear=True)
 
     def test_01_configure(self):
         tc = Configurator()
+
         tc.register(
-            "MyDb", {"name": "TestDb{ID}", "path": "/mnt/atc/silver/testdb{ID}"}
+            "MyDb", {"name": "TestDb{ID}", "path": "{storageAccount}/testdb{ID}"}
         )
 
         tc.register(
             "MyTbl",
             {
                 "name": "TestDb{ID}.TestTbl",
-                "path": "/mnt/atc/silver/testdb{ID}/testtbl",
+                "path": "{storageAccount}/testdb{ID}/testtbl",
             },
         )
 
@@ -39,7 +41,7 @@ class DeltaTests(unittest.TestCase):
         tc.register(
             "MyTbl3",
             {
-                "path": "/mnt/atc/silver/testdb/testtbl3",
+                "path": "{storageAccount}/testdb/testtbl3",
             },
         )
 

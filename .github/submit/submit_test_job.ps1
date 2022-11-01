@@ -82,12 +82,7 @@ $run = @{
     # single node cluster is sufficient
     new_cluster= @{
         spark_version=$sparkVersion
-        spark_conf= @{
-            "spark.databricks.cluster.profile"= "singleNode"
-            "spark.master"= "local[*, 4]"
-            "spark.databricks.delta.preview.enabled"= $true
-            "spark.databricks.io.cache.enabled"= $true
-        }
+        spark_conf = Get-Content "$PSScriptRoot/sparkconf.json" | ConvertFrom-Json
         azure_attributes=${
                 "availability"= "ON_DEMAND_AZURE",
                 "first_on_demand": 1,

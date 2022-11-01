@@ -4,24 +4,24 @@ from azure.cosmos.exceptions import CosmosHttpResponseError
 
 import atc.cosmos
 from atc import Configurator
-from atc.functions import init_dbutils
 from atc.spark import Spark
+from tests.cluster.config import InitConfigurator
+from tests.cluster.secrets import cosmosAccountKey
+from tests.cluster.values import cosmosEndpoint
 
 
 class TestCosmos(atc.cosmos.CosmosDb):
     def __init__(self):
-        dbutils = init_dbutils()
         super().__init__(
-            endpoint=dbutils.secrets.get("values", "Cosmos--Endpoint"),
-            account_key=dbutils.secrets.get("secrets", "Cosmos--AccountKey"),
+            endpoint=cosmosEndpoint(),
+            account_key=cosmosAccountKey(),
             database="AtcCosmosContainer",
         )
 
 
 class CosmosTests(unittest.TestCase):
     def test_01_tables(self):
-        tc = Configurator()
-        tc.clear_all_configurations()
+        tc = InitConfigurator(clear=True)
         tc.register(
             "CmsTbl",
             {

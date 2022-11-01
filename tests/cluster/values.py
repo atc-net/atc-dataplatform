@@ -10,3 +10,7 @@ def getValue(secret_name: str):
 
 def resourceName():
     return getValue("resourceName")
+
+
+def cosmosEndpoint():
+    return getValue("Cosmos--Endpoint")

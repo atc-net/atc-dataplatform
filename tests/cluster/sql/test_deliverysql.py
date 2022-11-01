@@ -2,9 +2,9 @@ from atc_tools.testing.DataframeTestCase import DataframeTestCase
 from pyspark.sql import DataFrame
 from pyspark.sql.types import IntegerType, StringType, StructField, StructType
 
-from atc import Configurator
 from atc.functions import get_unique_tempview_name
 from atc.utils import DataframeCreator
+from tests.cluster.config import InitConfigurator
 from tests.cluster.sql.DeliverySqlServer import DeliverySqlServer
 
 from . import extras
@@ -20,11 +20,11 @@ class DeliverySqlServerTests(DataframeTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.sql_server = DeliverySqlServer()
-        cls.tc = Configurator()
-
+        cls.tc = InitConfigurator(clear=True)
         cls.tc.add_resource_path(extras)
         cls.tc.reset(debug=True)
+
+        cls.sql_server = DeliverySqlServer()
 
     @classmethod
     def tearDownClass(cls) -> None:

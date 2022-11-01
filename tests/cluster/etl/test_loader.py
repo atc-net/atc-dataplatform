@@ -8,6 +8,8 @@ from atc.spark import Spark
 
 
 class LoaderTests(unittest.TestCase):
+    loader: Loader
+
     @classmethod
     def setUp(self):
 

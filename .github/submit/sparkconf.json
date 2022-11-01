@@ -1,0 +1,13 @@
+{
+  "spark.databricks.cluster.profile": "singleNode",
+  "spark.master": "local[*, 4]",
+  "spark.databricks.delta.preview.enabled": true,
+  "spark.databricks.io.cache.enabled": true,
+
+  "fs.azure.account.auth.type.$resourceName.dfs.core.windows.net": "OAuth",
+  "fs.azure.account.oauth.provider.type.$resourceName.dfs.core.windows.net": "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider",
+  "fs.azure.account.oauth2.client.id.$resourceName.dfs.core.windows.net": "{{ secrets/secrets/DatabricksClientId }}",
+  "fs.azure.account.oauth2.client.secret.$resourceName.dfs.core.windows.net": "{{ secrets/secrets/DatabricksClientSecret }}",
+  "fs.azure.account.oauth2.client.endpoint.$resourceName.dfs.core.windows.net": "{{ secrets/secrets/DatabricksOauthEndpoint }}"
+}
+TODO: fix the resource name. Not possible in this json
