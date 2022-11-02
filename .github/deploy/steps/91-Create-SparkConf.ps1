@@ -10,10 +10,13 @@ $confDirectAccess["spark.databricks.io.cache.enabled"] = $true
 $confDirectAccess["spark.master"]= "local[*, 4]"
 
 Write-Host "  Adds Direct Access for $resourceName..." -ForegroundColor DarkYellow
-$confDirectAccess["fs.azure.account.auth.type.$resourceName.dfs.core.windows.net"] = "OAuth"
-$confDirectAccess["fs.azure.account.oauth.provider.type.$resourceName.dfs.core.windows.net"] = "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider"
-$confDirectAccess["fs.azure.account.oauth2.client.id.$resourceName.dfs.core.windows.net"] = "{{secrets/secrets/DatabricksClientId}}"
-$confDirectAccess["fs.azure.account.oauth2.client.endpoint.$resourceName.dfs.core.windows.net"] = "{{secrets/secrets/DatabricksOauthEndpoint}}"
-$confDirectAccess["fs.azure.account.oauth2.client.secret.$resourceName.dfs.core.windows.net"] = "{{secrets/secrets/DatabricksClientSecret}}"
+$storageUrl = "$resourceName.dfs.core.windows.net"
+$confDirectAccess["fs.azure.account.auth.type.$storageUrl"] = "OAuth"
+$confDirectAccess["fs.azure.account.oauth.provider.type.$storageUrl"] = "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider"
+$confDirectAccess["fs.azure.account.oauth2.client.id.$storageUrl"] = "{{secrets/secrets/DatabricksClientId}}"
+$confDirectAccess["fs.azure.account.oauth2.client.endpoint.$storageUrl"] = "{{secrets/secrets/DatabricksOauthEndpoint}}"
+$confDirectAccess["fs.azure.account.oauth2.client.secret.$storageUrl"] = "{{secrets/secrets/DatabricksClientSecret}}"
+
+$values.addSecret("StorageAccount--Url", $storageUrl)
 
 Set-Content $repoRoot\.github\submit\sparkconf.json ($confDirectAccess | ConvertTo-Json)
