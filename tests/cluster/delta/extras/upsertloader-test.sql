@@ -10,4 +10,4 @@ CREATE TABLE IF NOT EXISTS {UpsertLoaderDummy}
 )
 USING DELTA
 COMMENT "Contains Incremental Base test data"
-LOCATION "{UpsertLoaderDummy_path}"
+LOCATION "{UpsertLoaderDummy_path}";

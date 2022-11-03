@@ -8,4 +8,4 @@ CREATE TABLE {SqlTestTable1}
 CREATE TABLE {SqlTestTable2}
 (
  testcolumn INT NULL
-)
+);

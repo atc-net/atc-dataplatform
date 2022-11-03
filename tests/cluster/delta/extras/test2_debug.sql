@@ -5,4 +5,4 @@ CREATE TABLE IF NOT EXISTS {SparkTestTable2}(
 a int
 )
 USING DELTA
-LOCATION "{SparkTestTable2_path}"
+LOCATION "{SparkTestTable2_path}";
