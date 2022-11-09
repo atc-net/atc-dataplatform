@@ -69,7 +69,7 @@ class DeltaUpsertTests(DataframeTestCase):
         """The target table is already filled from before.
         This test does not test .upsert() logic,
         but ensures that test 03 resembles an upsert after a full load.
-        If one needs to make an full load, use the .overwrite() method"""
+        If one needs to make a full load, use the .overwrite() method"""
         self.assertEqual(2, len(self.target_dh_dummy.read().collect()))
 
         df_source = DataframeCreator.make_partial(

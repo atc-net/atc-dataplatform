@@ -9,7 +9,7 @@ def InitConfigurator(*, clear=False):
     if clear:
         tc.clear_all_configurations()
 
-    # This is how you would set yourself up for differnet environments
+    # This is how you would set yourself up for different environments
     # tc.register('ENV','dev')
 
     tc.register("resourceName", values.resourceName())

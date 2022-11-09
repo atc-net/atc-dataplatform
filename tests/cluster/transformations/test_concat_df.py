@@ -189,7 +189,7 @@ def create_df3():
 
 
 def get_number_rows_1(df, id, brand, model, year=None):
-    # When testing the first transformation, theres only "year" as column
+    # When testing the first transformation, there's only "year" as column
     if year is not None:
         return df.filter(
             (f.col("id") == id)
@@ -201,7 +201,7 @@ def get_number_rows_1(df, id, brand, model, year=None):
 
 
 def get_number_rows_2(df, id, brand, model, year=None, size=None):
-    # When testing the second transformation, theres only "year" and "size" as column
+    # When testing the second transformation, there's only "year" and "size" as column
     if year is not None:
         return df.filter(
             (f.col("id") == id)

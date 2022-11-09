@@ -106,7 +106,7 @@ class DeliverySqlServerTests(DataframeTestCase):
         self.assertTrue(True)
 
     def test10_read_w_id(self):
-        # This might fail if the previous test didnt succeed
+        # This might fail if the previous test didn't succeed
         self.sql_server.read_table("SqlTestTable1")
         self.sql_server.read_table("SqlTestTable2")
         self.assertTrue(True)

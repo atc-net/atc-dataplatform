@@ -1,5 +1,5 @@
 from atc.sql.SqlServer import SqlServer
-from tests.cluster.secrets import dbDeployClientId, dbDeployClientSecret
+from tests.cluster.secrets import clientId, clientSecret
 
 
 class DeliverySqlServerSpn(SqlServer):
@@ -9,6 +9,6 @@ class DeliverySqlServerSpn(SqlServer):
         super().__init__(
             hostname="{resourceName}test.database.windows.net",
             database="Delivery",
-            spnpassword=dbDeployClientSecret(),
-            spnid=dbDeployClientId(),
+            spnpassword=clientSecret(),
+            spnid=clientId(),
         )

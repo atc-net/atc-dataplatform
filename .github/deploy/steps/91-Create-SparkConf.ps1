@@ -1,7 +1,6 @@
 
-$repoRoot = git rev-parse --show-toplevel
-
 Write-Host "Write cluster configuration for Direct Access..." -ForegroundColor DarkYellow
+
 $confDirectAccess = [ordered]@{}
 
 $confDirectAccess["spark.databricks.cluster.profile"]= "singleNode"

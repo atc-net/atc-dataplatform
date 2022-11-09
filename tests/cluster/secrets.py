@@ -24,9 +24,9 @@ def sqlServerUserPassword():
     return getSecret("SqlServer--DatabricksUserPassword")
 
 
-def dbDeployClientSecret():
-    return getSecret("DbDeploy--ClientSecret")
+def clientSecret():
+    return getSecret("DatabricksClientSecret")
 
 
-def dbDeployClientId():
-    return getSecret("DbDeploy--ClientId")
+def clientId():
+    return getSecret("DatabricksClientId")
