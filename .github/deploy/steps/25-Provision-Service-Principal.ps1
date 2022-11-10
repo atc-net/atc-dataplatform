@@ -29,8 +29,9 @@ $dbSpn = Get-SpnWithSecret -spnName $dbDeploySpnName -keyVaultName $keyVaultName
 
 $mountSpn = Get-SpnWithSecret -spnName $mountSpnName -keyVaultName $keyVaultName
 $secrets.addSecret("Databricks--TenantId", $tenantId)
-$secrets.addSecret("Databricks--ClientId", $mountSpn.clientId)
-$secrets.addSecret("Databricks--ClientSecret", $mountSpn.secretText)
+$secrets.addSecret("DatabricksOauthEndpoint", "https://login.microsoftonline.com/$tenantId/oauth2/token")
+$secrets.addSecret("DatabricksClientId", $mountSpn.clientId)
+$secrets.addSecret("DatabricksClientSecret", $mountSpn.secretText)
 
 # there is a chicken-and-egg problem where we want to save the new SPN secret in the
 # keyvault, but the keyvault may not exist yet. This doesn't matter since the keyvault

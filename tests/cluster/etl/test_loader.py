@@ -8,16 +8,18 @@ from atc.spark import Spark
 
 
 class LoaderTests(unittest.TestCase):
+    loader: Loader
+
     @classmethod
-    def setUp(self):
+    def setUp(cls):
 
-        self.loader = Loader()
-        self.loader.save = MagicMock()
-        self.loader.save_many = MagicMock()
+        cls.loader = Loader()
+        cls.loader.save = MagicMock()
+        cls.loader.save_many = MagicMock()
 
-        self.df_1 = create_dataframe()
-        self.df_2 = create_dataframe()
-        self.df_3 = create_dataframe()
+        cls.df_1 = create_dataframe()
+        cls.df_2 = create_dataframe()
+        cls.df_3 = create_dataframe()
 
     def test_return_inputs(self):
         # Assert Loader returns ouput

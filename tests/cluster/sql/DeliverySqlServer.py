@@ -1,6 +1,5 @@
-from atc.functions import init_dbutils
 from atc.sql.SqlServer import SqlServer
-from tests.cluster.values import resourceName
+from tests.cluster.secrets import sqlServerUser, sqlServerUserPassword
 
 
 class DeliverySqlServer(SqlServer):
@@ -14,20 +13,10 @@ class DeliverySqlServer(SqlServer):
     ):
 
         self.hostname = (
-            f"{resourceName()}test.database.windows.net"
-            if hostname is None
-            else hostname
+            "{resourceName}test.database.windows.net" if hostname is None else hostname
         )
-        self.username = (
-            init_dbutils().secrets.get("secrets", "SqlServer--DatabricksUser")
-            if username is None
-            else username
-        )
-        self.password = (
-            init_dbutils().secrets.get("secrets", "SqlServer--DatabricksUserPassword")
-            if password is None
-            else password
-        )
+        self.username = sqlServerUser() if username is None else username
+        self.password = sqlServerUserPassword() if password is None else password
         self.database = database
         self.port = port
         super().__init__(

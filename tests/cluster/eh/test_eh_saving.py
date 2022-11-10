@@ -14,7 +14,7 @@ from atc.etl import Transformer
 from atc.functions import init_dbutils
 from atc.orchestrators import EhJsonToDeltaOrchestrator
 from atc.spark import Spark
-from tests.cluster.values import resourceName
+from tests.cluster.config import InitConfigurator
 
 from .AtcEh import AtcEh
 
@@ -22,7 +22,7 @@ from .AtcEh import AtcEh
 class EventHubsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        Configurator().clear_all_configurations()
+        InitConfigurator(clear=True)
 
     def test_01_publish(self):
         eh = AtcEh()
@@ -35,33 +35,40 @@ class EventHubsTests(unittest.TestCase):
         # wait until capture file appears
         dbutils = init_dbutils()
 
+        silverContainer = Configurator().get("storageAccount")
+        resourceName = Configurator().get("resourceName")
+
         limit = datetime.now() + timedelta(minutes=10)
 
+        conts = None
         while datetime.now() < limit:
-            conts = {
-                item.name for item in dbutils.fs.ls(f"/mnt/{resourceName()}/silver")
-            }
-            if f"{resourceName()}/" in conts:
+            conts = {item.name for item in dbutils.fs.ls(silverContainer)}
+            if f"{resourceName}/" in conts:
                 break
             else:
                 time.sleep(10)
                 continue
         else:
+            print("Only found:", conts)
             self.assertTrue(False, "The capture file never appeared.")
 
         self.assertTrue(True, "The capture file has appeared.")
 
+    @unittest.skip(reason="EventHubCapture is deprecated an no longer tested.")
+    # not testing this class allows us to skip the mount point setup job
     def test_03_read_eh_capture(self):
         tc = Configurator()
+
         tc.register(
             "AtcEh",
             {
                 "name": "AtcEh",
-                "path": f"/mnt/{resourceName()}/silver/{resourceName()}/atceh",
+                "path": "{storageAccount}/{resourceName}/atceh",
                 "format": "avro",
                 "partitioning": "ymd",
             },
         )
+
         eh = EventHubCapture.from_tc("AtcEh")
         df = eh.read()
 
@@ -76,7 +83,7 @@ class EventHubsTests(unittest.TestCase):
         tc.register(
             "AtcEh",
             {
-                "path": f"/mnt/{resourceName()}/silver/{resourceName()}/atceh",
+                "path": "{storageAccount}/{resourceName()}/atceh",
                 "format": "avro",
                 "partitioning": "ymd",
             },

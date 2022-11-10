@@ -2,10 +2,10 @@ from typing import List
 
 from atc_tools.testing import DataframeTestCase
 
-from atc import Configurator
 from atc.delta import DbHandle, DeltaHandle
 from atc.etl.loaders.UpsertLoader import UpsertLoader
 from atc.utils import DataframeCreator
+from tests.cluster.config import InitConfigurator
 from tests.cluster.delta import extras
 from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
 
@@ -33,8 +33,9 @@ class UpsertLoaderTests(DataframeTestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        Configurator().add_resource_path(extras)
-        Configurator().set_debug()
+        tc = InitConfigurator(clear=True)
+        tc.add_resource_path(extras)
+        tc.set_debug()
 
         cls.target_dh_dummy = DeltaHandle.from_tc("UpsertLoaderDummy")
 

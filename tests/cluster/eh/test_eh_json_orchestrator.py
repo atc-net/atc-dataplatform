@@ -8,6 +8,7 @@ from atc.delta import DeltaHandle
 from atc.eh import EventHubCaptureExtractor
 from atc.orchestrators.ehjson2delta.EhJsonToDeltaExtractor import EhJsonToDeltaExtractor
 from atc.spark import Spark
+from tests.cluster.config import InitConfigurator
 
 
 class JsonEhOrchestratorUnitTests(unittest.TestCase):
@@ -15,8 +16,7 @@ class JsonEhOrchestratorUnitTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.tc = TableConfigurator()
-        cls.tc.clear_all_configurations()
+        cls.tc = InitConfigurator(clear=True)
         cls.tc.register("TblYMD", {"name": "TableYMD"})
         cls.tc.register("TblYMDH", {"name": "TableYMDH"})
         cls.tc.register("TblPdate", {"name": "TablePdate"})

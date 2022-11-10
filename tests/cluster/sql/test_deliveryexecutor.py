@@ -1,6 +1,6 @@
 import unittest
 
-from atc import Configurator
+from tests.cluster.config import InitConfigurator
 from tests.cluster.sql.DeliverySqlExecutor import DeliverySqlExecutor
 from tests.cluster.sql.DeliverySqlServer import DeliverySqlServer
 
@@ -13,12 +13,13 @@ class DeliverySqlExecutorTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.sql_server = DeliverySqlServer()
 
         # Register the delivery table for the table configurator
-        cls.tc = Configurator()
+        cls.tc = InitConfigurator(clear=True)
         cls.tc.add_resource_path(extras)
         cls.tc.set_debug()
+
+        cls.sql_server = DeliverySqlServer()
 
         # Ensure no table is there
         cls.sql_server.drop_table("SqlTestTable1")

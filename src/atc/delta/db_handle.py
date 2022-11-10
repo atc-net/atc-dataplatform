@@ -50,5 +50,6 @@ class DbHandle:
     def create(self) -> None:
         sql = f"CREATE DATABASE IF NOT EXISTS {self._name} "
         if self._location:
-            sql += f" LOCATION '{self._location}'"
+            sql += f' LOCATION "{self._location}"'
+        print("execute sql:", sql)
         Spark.get().sql(sql)

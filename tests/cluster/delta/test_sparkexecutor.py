@@ -1,8 +1,8 @@
 import unittest
 
-from atc import Configurator
 from atc.delta import DbHandle, DeltaHandle
 from atc.spark import Spark
+from tests.cluster.config import InitConfigurator
 from tests.cluster.delta import extras
 from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
 
@@ -16,7 +16,7 @@ class DeliverySparkExecutorTests(unittest.TestCase):
     def setUpClass(cls):
 
         # Register the delivery table for the table configurator
-        cls.tc = Configurator()
+        cls.tc = InitConfigurator()
         cls.tc.add_resource_path(extras)
         cls.tc.set_debug()
 

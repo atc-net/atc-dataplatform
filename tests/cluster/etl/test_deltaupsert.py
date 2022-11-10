@@ -2,9 +2,9 @@ from typing import List
 
 from atc_tools.testing import DataframeTestCase
 
-from atc import Configurator
 from atc.delta import DbHandle, DeltaHandle
 from atc.utils import DataframeCreator
+from tests.cluster.config import InitConfigurator
 from tests.cluster.delta import extras
 from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
 
@@ -37,8 +37,9 @@ class DeltaUpsertTests(DataframeTestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        Configurator().add_resource_path(extras)
-        Configurator().set_debug()
+        tc = InitConfigurator(clear=True)
+        tc.add_resource_path(extras)
+        tc.set_debug()
 
         cls.target_dh_dummy = DeltaHandle.from_tc("UpsertLoaderDummy")
 
@@ -68,7 +69,7 @@ class DeltaUpsertTests(DataframeTestCase):
         """The target table is already filled from before.
         This test does not test .upsert() logic,
         but ensures that test 03 resembles an upsert after a full load.
-        If one needs to make an full load, use the .overwrite() method"""
+        If one needs to make a full load, use the .overwrite() method"""
         self.assertEqual(2, len(self.target_dh_dummy.read().collect()))
 
         df_source = DataframeCreator.make_partial(

@@ -1,5 +1,7 @@
+import time
 import unittest
 
+from py4j.protocol import Py4JJavaError
 from pyspark.sql.utils import AnalysisException
 
 from atc import Configurator
@@ -7,39 +9,42 @@ from atc.delta import DbHandle, DeltaHandle
 from atc.etl import Orchestrator
 from atc.etl.extractors import SimpleExtractor
 from atc.etl.loaders import SimpleLoader
+from atc.functions import init_dbutils
 from atc.spark import Spark
+from tests.cluster.config import InitConfigurator
 
 
 class DeltaTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        Configurator().clear_all_configurations()
+        InitConfigurator(clear=True)
 
     def test_01_configure(self):
         tc = Configurator()
+
         tc.register(
-            "MyDb", {"name": "TestDb{ID}", "path": "/mnt/atc/silver/testdb{ID}"}
+            "MyDb", {"name": "TestDb{ID}", "path": "{storageAccount}/testdb{ID}"}
         )
 
         tc.register(
             "MyTbl",
             {
-                "name": "TestDb{ID}.TestTbl",
-                "path": "/mnt/atc/silver/testdb{ID}/testtbl",
+                "name": "{MyDb}.TestTbl",
+                "path": "{MyDb_path}/testtbl",
             },
         )
 
         tc.register(
             "MyTbl2",
             {
-                "name": "TestDb{ID}.TestTbl2",
+                "name": "{MyDb}.TestTbl2",
             },
         )
 
         tc.register(
             "MyTbl3",
             {
-                "path": "/mnt/atc/silver/testdb/testtbl3",
+                "path": "{storageAccount}/testdb/testtbl3",
             },
         )
 
@@ -67,12 +72,40 @@ class DeltaTests(unittest.TestCase):
 
         dh.append(df, mergeSchema=True)
 
+    # @unittest.skip("Flaky test")
     def test_03_create(self):
+        # print(Configurator().get_all_details())
+        # print(
+        #     {
+        #         k: v[:-15] + v[-12:]
+        #         for k, v in Spark.get().sparkContext.getConf().getAll()
+        #         if k.startswith("fs.azure.account")
+        #     }
+        # )
+
         db = DbHandle.from_tc("MyDb")
         db.create()
 
         dh = DeltaHandle.from_tc("MyTbl")
-        dh.create_hive_table()
+        tc = Configurator()
+        print(init_dbutils().fs.ls(tc.get("MyTbl", "path")))
+        print(
+            init_dbutils().fs.put(
+                tc.get("MyTbl", "path") + "/some.file.txt", "Hello, ATC!", True
+            )
+        )
+        print(init_dbutils().fs.ls(tc.get("MyTbl", "path")))
+        for i in range(10, 0, -1):
+            try:
+                dh.create_hive_table()
+                break
+            except (AnalysisException, Py4JJavaError) as e:
+                if i > 0:
+                    print(e)
+                    print("trying again in 10 seconds")
+                    time.sleep(10)
+                else:
+                    raise e
 
         # test hive access:
         df = Spark.get().table("TestDb.TestTbl")
