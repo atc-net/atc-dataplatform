@@ -1,5 +1,7 @@
+import time
 import unittest
 
+from py4j.protocol import Py4JJavaError
 from pyspark.sql.utils import AnalysisException
 
 from atc import Configurator
@@ -7,6 +9,7 @@ from atc.delta import DbHandle, DeltaHandle
 from atc.etl import Orchestrator
 from atc.etl.extractors import SimpleExtractor
 from atc.etl.loaders import SimpleLoader
+from atc.functions import init_dbutils
 from atc.spark import Spark
 from tests.cluster.config import InitConfigurator
 
@@ -84,7 +87,25 @@ class DeltaTests(unittest.TestCase):
         db.create()
 
         dh = DeltaHandle.from_tc("MyTbl")
-        dh.create_hive_table()
+        tc = Configurator()
+        print(init_dbutils().fs.ls(tc.get("MyTbl", "path")))
+        print(
+            init_dbutils().fs.put(
+                tc.get("MyTbl", "path") + "/some.file.txt", "Hello, ATC!", True
+            )
+        )
+        print(init_dbutils().fs.ls(tc.get("MyTbl", "path")))
+        for i in range(10, 0, -1):
+            try:
+                dh.create_hive_table()
+                break
+            except (AnalysisException, Py4JJavaError) as e:
+                if i > 0:
+                    print(e)
+                    print("trying again in 10 seconds")
+                    time.sleep(10)
+                else:
+                    raise e
 
         # test hive access:
         df = Spark.get().table("TestDb.TestTbl")

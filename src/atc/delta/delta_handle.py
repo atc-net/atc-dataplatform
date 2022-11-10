@@ -92,11 +92,11 @@ class DeltaHandle(TableHandle):
         return self.write_or_append(df, "append", mergeSchema=mergeSchema)
 
     def truncate(self) -> None:
-        if self._path:
-            Spark.get().sql(f"TRUNCATE TABLE delta.`{self._path}`;")
+        if self._location:
+            Spark.get().sql(f"TRUNCATE TABLE delta.`{self._location}`;")
         else:
             Spark.get().sql(f"TRUNCATE TABLE {self._name};")
-            # if the name also does not exit, this will give a useful error like
+            # if the hive table does not exit, this will give a useful error like
             # pyspark.sql.utils.AnalysisException:
             #                  Table not found for 'TRUNCATE TABLE': TestDb.TestTbl;
 
