@@ -92,7 +92,13 @@ class DeltaHandle(TableHandle):
         return self.write_or_append(df, "append", mergeSchema=mergeSchema)
 
     def truncate(self) -> None:
-        Spark.get().sql(f"TRUNCATE TABLE {self._name};")
+        if self._path:
+            Spark.get().sql(f"TRUNCATE TABLE delta.`{self._path}`;")
+        else:
+            Spark.get().sql(f"TRUNCATE TABLE {self._name};")
+            # if the name also does not exit, this will give a useful error like
+            # pyspark.sql.utils.AnalysisException:
+            #                  Table not found for 'TRUNCATE TABLE': TestDb.TestTbl;
 
     def drop(self) -> None:
         Spark.get().sql(f"DROP TABLE IF EXISTS {self._name};")
@@ -105,7 +111,8 @@ class DeltaHandle(TableHandle):
     def create_hive_table(self) -> None:
         sql = f"CREATE TABLE IF NOT EXISTS {self._name} "
         if self._location:
-            sql += f" USING DELTA LOCATION '{self._location}'"
+            sql += f' USING DELTA LOCATION "{self._location}"'
+        print("execute sql:", sql)
         Spark.get().sql(sql)
 
     def recreate_hive_table(self):
