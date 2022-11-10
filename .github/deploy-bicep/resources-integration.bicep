@@ -14,6 +14,7 @@ param sqlServerAdminUser string
 param sqlServerAdminPassword string
 param pipelineSpnName string
 param pipelineObjectId string
+param accesConName string
 
 //#############################################################################################
 //# Provision Databricks Workspace
@@ -66,6 +67,22 @@ resource staccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
         publicAccess: 'None'
       }
     }]
+  }
+}
+
+
+// #############################################
+// # Access connector for data bricks
+// https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/enable-workspaces
+// https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/create-metastore
+// https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/azure-managed-identities#config-managed-id
+// #####################################################
+
+resource accCon 'Microsoft.Databricks/accessConnectors@2022-04-01-preview' = {
+  name: accesConName
+  location: location
+  identity: {
+    type: 'SystemAssigned'
   }
 }
 

@@ -23,6 +23,7 @@ param sqlServerAdminUser string
 param sqlServerAdminPassword string
 param pipelineSpnName string
 param pipelineObjectId string
+param accesConName string
 
 // Creating permanent resource group
 module rgModule 'rg-permanent.bicep' = {
@@ -82,5 +83,6 @@ module resources2 'resources-integration.bicep' = {
     sqlServerAdminPassword: sqlServerAdminPassword
     pipelineSpnName: pipelineSpnName
     pipelineObjectId: pipelineObjectId
+    accesConName: accesConName
   }
 }
