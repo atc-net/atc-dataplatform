@@ -79,6 +79,14 @@ class EventHubCaptureExtractor:
             ),
         )
         df = df.drop("_parts")
+
+        # for some bizarre reason, the built-in string timestamp uses
+        # a localized date-time format and not a standardized one.
+        # add a standardized timestamp
+        df = df.withColumn(
+            "EnqueuedTimestamp",
+            f.to_timestamp(f.col("EnqueuedTimeUtc"), "M/d/yyyy h:mm:ss a"),
+        )
         return df
 
     def _now_utc(self):
@@ -186,7 +194,10 @@ class EventHubCaptureExtractor:
             try:
                 part_df = spark.read.format("avro").load(self.path + "/" + part)
             except (pyspark.sql.utils.AnalysisException, py4j.protocol.Py4JError):
-                print(f"part {part} caused an analysis exception")
+                print(
+                    f"WARNING: part {part} caused an analysis exception. "
+                    "The partition is probably empty."
+                )
                 continue
             if df is None:
                 df = self._add_columns(part_df)
