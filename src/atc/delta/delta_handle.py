@@ -186,8 +186,6 @@ class DeltaHandle(TableHandle):
         df, merge_required = CheckDfMerge(
             df=df,
             df_target=df_target,
-            join_cols=join_cols,
-            avoid_cols=[],
         )
 
         if not merge_required:
