@@ -6,12 +6,12 @@ from pyspark.sql.streaming import DataStreamWriter, StreamingQuery
 from atc.configurator.configurator import Configurator
 from atc.functions import get_unique_tempview_name, init_dbutils
 from atc.spark import Spark
-from atc.tables import TableHandle
+from atc.tables.SparkHandle import SparkHandle
 from atc.utils import GetMergeStatement
 from atc.utils.CheckDfMerge import CheckDfMerge
 
 
-class AutoLoaderHandle(TableHandle):
+class AutoLoaderHandle(SparkHandle):
     def __init__(
         self,
         *,
@@ -21,14 +21,9 @@ class AutoLoaderHandle(TableHandle):
         data_format: str = "delta",
         # trigger_type ?
     ):
-        self._name = name
-        self._location = location
-        self._data_format = data_format
-        self._checkpoint_path = checkpoint_path
-        # Initialize Delta Handle
-        self._partitioning: Optional[List[str]] = None
+        super().__init__(name, location, data_format)
 
-        _ = self.get_partitioning()
+        self._checkpoint_path = checkpoint_path
 
         # do we need delta valication?
         # self._validate()
