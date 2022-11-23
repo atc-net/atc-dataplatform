@@ -68,7 +68,7 @@ class AutoLoaderHandle(SparkHandle):
             .trigger(availableNow=True)
         )
 
-        return self._add_write_options(writer, mergeSchema)
+        return self._add_write_options(writer, mergeSchema)  # awaitTermination()
 
     def append(self, df: DataFrame, mergeSchema: bool = None) -> StreamingQuery:
         writer = (
@@ -77,7 +77,7 @@ class AutoLoaderHandle(SparkHandle):
             .trigger(availableNow=True)
         )
 
-        return self._add_write_options(writer, mergeSchema)
+        return self._add_write_options(writer, mergeSchema)  # awaitTermination()
 
     # Truncate checkpoints too
     def truncate(self) -> None:
