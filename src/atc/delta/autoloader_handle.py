@@ -5,7 +5,7 @@ from pyspark.sql.streaming import DataStreamWriter, StreamingQuery
 
 from atc.configurator.configurator import Configurator
 from atc.delta import DeltaHandle
-from atc.functions import get_unique_tempview_name
+from atc.functions import get_unique_tempview_name, init_dbutils
 from atc.spark import Spark
 from atc.utils import GetMergeStatement
 from atc.utils.CheckDfMerge import CheckDfMerge
@@ -56,7 +56,7 @@ class AutoLoaderHandle(DeltaHandle):
     def write_or_append(
         self, df: DataFrame, mode: str, mergeSchema: bool = None
     ) -> None:
-        pass
+        NotImplementedError()
 
     def overwrite(self, df: DataFrame, mergeSchema: bool = None) -> StreamingQuery:
 
@@ -79,22 +79,19 @@ class AutoLoaderHandle(DeltaHandle):
 
     # Truncate checkpoints too
     def truncate(self) -> None:
-        pass
+        Spark.get().sql(f"TRUNCATE TABLE {self._name};")
+        init_dbutils().fs.rm(self._checkpoint_path, True)
 
     # What about check points?
     def drop(self) -> None:
-        pass
+        Spark.get().sql(f"DROP TABLE IF EXISTS {self._name};")
+        init_dbutils().fs.rm(self._checkpoint_path, True)
 
     # What about check points?
     def drop_and_delete(self) -> None:
-        pass
-
-    # What about check points?
-    def create_hive_table(self) -> None:
-        pass
-
-    def recreate_hive_table(self):
-        pass
+        self.drop()
+        if self._location:
+            init_dbutils().fs.rm(self._location, True)
 
     def upsert(
         self,
@@ -167,6 +164,9 @@ class AutoLoaderHandle(DeltaHandle):
             writer = writer.start(self._location)
         else:
             writer = writer.toTable(self._name)
+
+        # What about this??
+        # .option("path", f"{DA.paths.user_db}/heart_rate_silver.delta")
 
         return writer
 
