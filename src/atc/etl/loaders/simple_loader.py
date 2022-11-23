@@ -1,12 +1,13 @@
 from typing import Protocol, Union
 
 from pyspark.sql import DataFrame
+from pyspark.sql.streaming import StreamingQuery
 
 from atc.etl import Loader
 
 
 class Overwritable(Protocol):
-    def overwrite(self, df: DataFrame) -> None:
+    def overwrite(self, df: DataFrame) -> Union[None, StreamingQuery]:
         pass
 
 
