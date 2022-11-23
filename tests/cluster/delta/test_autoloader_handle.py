@@ -9,13 +9,18 @@ from atc.etl import Orchestrator
 from atc.etl.extractors import SimpleExtractor
 from atc.etl.loaders import SimpleLoader
 from atc.spark import Spark
+from atc.utils.stop_all_streams import stop_all_streams
 
 
-@unittest.skip("REMEMBER TO unskip when delta tables tests are fixed")
 class AutoloaderTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         Configurator().clear_all_configurations()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        DbHandle.from_tc("MyDb").drop_cascade()
+        stop_all_streams()
 
     def test_01_configure(self):
         tc = Configurator()

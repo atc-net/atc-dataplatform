@@ -1,4 +1,3 @@
-import unittest
 from typing import List
 
 from atc_tools.testing import DataframeTestCase
@@ -8,11 +7,11 @@ from atc.delta import DbHandle
 from atc.delta.autoloader_handle import AutoLoaderHandle
 from atc.etl.loaders.UpsertLoader import UpsertLoader
 from atc.utils import DataframeCreator
+from atc.utils.stop_all_streams import stop_all_streams
 from tests.cluster.delta import extras
 from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
 
 
-@unittest.skip("REMEMBER TO unskip when delta tables tests are fixed")
 class UpsertLoaderTestsAutoloader(DataframeTestCase):
     target_id = "UpsertLoaderDummy"
 
@@ -52,6 +51,7 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         DbHandle.from_tc("UpsertLoaderDb").drop_cascade()
+        stop_all_streams()
 
     def test_01_can_perform_incremental_on_empty(self):
 
