@@ -1,10 +1,10 @@
-from typing import List, Optional
+from typing import List
 
 from pyspark.sql import DataFrame
 from pyspark.sql.streaming import DataStreamWriter, StreamingQuery
 
 from atc.configurator.configurator import Configurator
-from atc.functions import get_unique_tempview_name, init_dbutils
+from atc.functions import init_dbutils
 from atc.spark import Spark
 from atc.tables.SparkHandle import SparkHandle
 from atc.utils import GetMergeStatement

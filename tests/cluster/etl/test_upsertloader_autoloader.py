@@ -4,7 +4,7 @@ from typing import List
 from atc_tools.testing import DataframeTestCase
 
 from atc import Configurator
-from atc.delta import DbHandle, DeltaHandle
+from atc.delta import DbHandle
 from atc.delta.autoloader_handle import AutoLoaderHandle
 from atc.etl.loaders.UpsertLoader import UpsertLoader
 from atc.utils import DataframeCreator

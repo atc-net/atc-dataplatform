@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Union
 
 from pyspark.sql import DataFrame
 
