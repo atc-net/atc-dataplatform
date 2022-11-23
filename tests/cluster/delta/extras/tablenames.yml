@@ -24,3 +24,4 @@ UpsertLoaderDb:
 UpsertLoaderDummy:
   name: "{UpsertLoaderDb}.Dummy"
   path: "{UpsertLoaderDb_path}/dummy"
+  checkpoint_path: /tmp/checkpoints/_upsertcheckpoints

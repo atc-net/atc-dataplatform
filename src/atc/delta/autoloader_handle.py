@@ -9,6 +9,7 @@ from atc.spark import Spark
 from atc.tables.SparkHandle import SparkHandle
 from atc.utils import GetMergeStatement
 from atc.utils.CheckDfMerge import CheckDfMerge
+from atc.utils.FileExists import file_exists
 
 
 class AutoLoaderHandle(SparkHandle):
@@ -81,11 +82,15 @@ class AutoLoaderHandle(SparkHandle):
     # Truncate checkpoints too
     def truncate(self) -> None:
         Spark.get().sql(f"TRUNCATE TABLE {self._name};")
+
+        # Should maybe check if checkpoint path exists?
         init_dbutils().fs.rm(self._checkpoint_path, True)
 
     # What about check points?
     def drop(self) -> None:
         Spark.get().sql(f"DROP TABLE IF EXISTS {self._name};")
+
+        # Should maybe check if checkpoint path exists?
         init_dbutils().fs.rm(self._checkpoint_path, True)
 
     # What about check points?
@@ -124,8 +129,6 @@ class AutoLoaderHandle(SparkHandle):
 
         target_table_name = self.get_tablename()
         non_join_cols = [col for col in df.columns if col not in join_cols]
-        # temp_view_name = get_unique_tempview_name()
-        # df.createOrReplaceTempView(temp_view_name)
 
         merge_sql_statement = GetMergeStatement(
             merge_statement_type="delta",
@@ -170,6 +173,9 @@ class AutoLoaderHandle(SparkHandle):
         return writer
 
     def create_hive_table(self) -> None:
+        if not file_exists(self._checkpoint_path):
+            init_dbutils().fs.mkdirs(self._checkpoint_path)
+
         sql = f"CREATE TABLE IF NOT EXISTS {self._name} "
         if self._location:
             sql += f" USING DELTA LOCATION '{self._location}'"
