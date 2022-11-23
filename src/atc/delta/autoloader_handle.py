@@ -8,6 +8,7 @@ from atc.delta import DeltaHandle
 from atc.functions import get_unique_tempview_name
 from atc.spark import Spark
 from atc.utils import GetMergeStatement
+from atc.utils.CheckDfMerge import CheckDfMerge
 
 
 class AutoLoaderHandle(DeltaHandle):
@@ -100,6 +101,28 @@ class AutoLoaderHandle(DeltaHandle):
         df: DataFrame,
         join_cols: List[str],
     ) -> StreamingQuery:
+
+        df_target = self.read()
+
+        # If the target is empty, always do faster full load
+        if len(df_target.take(1)) == 0:
+            return self.overwrite(df)
+
+        # Find records that need to be updated in the target (happens seldom)
+
+        # Define the column to be used for checking for new rows
+        # Checking the null-ness of one right row is sufficient to mark the row as new,
+        # since null keys are disallowed.
+
+        df, merge_required = CheckDfMerge(
+            df=df,
+            df_target=df_target,
+            join_cols=join_cols,
+            avoid_cols=[],
+        )
+
+        if not merge_required:
+            return self.append(df)
 
         target_table_name = self.get_tablename()
         non_join_cols = [col for col in df.columns if col not in join_cols]
