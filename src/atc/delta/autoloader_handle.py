@@ -63,9 +63,7 @@ class AutoLoaderHandle(SparkHandle):
     def write_or_append(
         self, df: DataFrame, mode: str, mergeSchema: bool = None
     ) -> None:
-        #######################################
-        # Note that there is no input dataframe
-        #######################################
+
         assert mode in {"append", "overwrite", "complete"}
         assert df.isStreaming
 
