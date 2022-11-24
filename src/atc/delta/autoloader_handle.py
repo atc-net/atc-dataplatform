@@ -40,13 +40,18 @@ class AutoLoaderHandle(SparkHandle):
         )
 
     def read(self) -> DataFrame:
+        # https://docs.delta.io/latest/delta-streaming.html
 
-        reader = (
-            Spark.get()
-            .readStream.format("cloudFiles")
-            .option("cloudFiles.format", self._data_format)
-            .option("cloudFiles.schemaLocation", self._checkpoint_path)
-        )
+        reader = Spark.get().readStream
+
+        if self._data_format == "delta":
+            reader = reader.format("delta")
+        else:
+            reader = (
+                reader.format("cloudFiles")
+                .option("cloudFiles.format", self._data_format)
+                .option("cloudFiles.schemaLocation", self._checkpoint_path)
+            )
 
         if self._location:
             reader = reader.load(self._location)
