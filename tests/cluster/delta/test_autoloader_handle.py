@@ -81,8 +81,8 @@ class AutoloaderTests(unittest.TestCase):
         db = DbHandle.from_tc("MyDb")
         db.create()
 
-        dh = AutoLoaderHandle.from_tc("MyTbl")
-        dh.create_hive_table()
+        ah = AutoLoaderHandle.from_tc("MyTbl")
+        ah.create_hive_table()
 
         # test hive access:
         df = Spark.get().table("TestDb.TestTbl")
@@ -90,11 +90,17 @@ class AutoloaderTests(unittest.TestCase):
 
     def test_04_read(self):
         df = AutoLoaderHandle.from_tc("MyTbl").read()
-        self.assertEqual(6, df.count())
+
+        self.assertTrue(df.isStreaming)
+        # self.assertEqual(6, df.count())
 
     def test_05_truncate(self):
-        dh = AutoLoaderHandle.from_tc("MyTbl")
-        dh.truncate()
+        ah = AutoLoaderHandle.from_tc("MyTbl")
+        ah.truncate()
+
+        # Using delta handle to check if there is no data
+        dh = DeltaHandle.from_tc("MyTbl")
+
         df = dh.read()
         self.assertEqual(0, df.count())
 
