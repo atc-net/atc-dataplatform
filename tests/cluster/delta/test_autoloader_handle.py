@@ -3,7 +3,7 @@ import unittest
 from pyspark.sql.utils import AnalysisException
 
 from atc import Configurator
-from atc.delta import DbHandle
+from atc.delta import DbHandle, DeltaHandle
 from atc.delta.autoloader_handle import AutoLoaderHandle
 from atc.etl import Orchestrator
 from atc.etl.extractors import SimpleExtractor
@@ -58,9 +58,8 @@ class AutoloaderTests(unittest.TestCase):
         AutoLoaderHandle.from_tc("MyTbl")
         AutoLoaderHandle.from_tc("MyTbl2")
 
-    @unittest.skip("Streaming cannot use static dataframe for streaming.")
-    def test_02_write(self):
-        dh = AutoLoaderHandle.from_tc("MyTbl")
+    def test_02_write_data_with_deltahandle(self):
+        dh = DeltaHandle.from_tc("MyTbl")
 
         df = Spark.get().createDataFrame([(1, "a"), (2, "b")], "id int, name string")
 
