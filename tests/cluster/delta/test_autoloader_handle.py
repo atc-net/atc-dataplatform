@@ -58,6 +58,7 @@ class AutoloaderTests(unittest.TestCase):
         AutoLoaderHandle.from_tc("MyTbl")
         AutoLoaderHandle.from_tc("MyTbl2")
 
+    @unittest.skip("Streaming cannot use static dataframe for streaming.")
     def test_02_write(self):
         dh = AutoLoaderHandle.from_tc("MyTbl")
 

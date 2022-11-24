@@ -58,26 +58,26 @@ class AutoLoaderHandle(SparkHandle):
     def write_or_append(
         self, df: DataFrame, mode: str, mergeSchema: bool = None
     ) -> None:
-        NotImplementedError()
+        assert mode in {"append", "overwrite", "complete"}
 
-    def overwrite(self, df: DataFrame, mergeSchema: bool = None) -> StreamingQuery:
+        if mode == "overwrite":
+            mode = "complete"
 
         writer = (
             df.writeStream.option("checkpointLocation", self._checkpoint_path)
-            .outputMode("complete")
+            .outputMode(mode)
             .trigger(availableNow=True)
         )
 
-        return self._add_write_options(writer, mergeSchema)  # awaitTermination()
+        writer = self._add_write_options(writer, mergeSchema)
 
-    def append(self, df: DataFrame, mergeSchema: bool = None) -> StreamingQuery:
-        writer = (
-            df.writeStream.option("checkpointLocation", self._checkpoint_path)
-            .outputMode("append")
-            .trigger(availableNow=True)
-        )
+        writer.awaitTermination()
 
-        return self._add_write_options(writer, mergeSchema)  # awaitTermination()
+    def overwrite(self, df: DataFrame, mergeSchema: bool = None) -> None:
+        return self.write_or_append(df, "complete", mergeSchema)
+
+    def append(self, df: DataFrame, mergeSchema: bool = None) -> None:
+        return self.write_or_append(df, "append", mergeSchema)
 
     # Truncate checkpoints too
     def truncate(self) -> None:
@@ -99,11 +99,7 @@ class AutoLoaderHandle(SparkHandle):
         if self._location:
             init_dbutils().fs.rm(self._location, True)
 
-    def upsert(
-        self,
-        df: DataFrame,
-        join_cols: List[str],
-    ) -> StreamingQuery:
+    def upsert(self, df: DataFrame, join_cols: List[str]) -> None:
 
         df_target = self.read()
 
@@ -150,9 +146,7 @@ class AutoLoaderHandle(SparkHandle):
             .trigger(availableNow=True)
             .start()
         )
-        # .awaitTermination() ?
-
-        return writer
+        writer.awaitTermination()
 
     def _add_write_options(self, writer: DataStreamWriter, mergeSchema: bool):
 
