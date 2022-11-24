@@ -1,7 +1,7 @@
 from typing import List
 
 from pyspark.sql import DataFrame
-from pyspark.sql.streaming import DataStreamWriter, StreamingQuery
+from pyspark.sql.streaming import DataStreamWriter
 
 from atc.configurator.configurator import Configurator
 from atc.functions import init_dbutils
@@ -55,16 +55,23 @@ class AutoLoaderHandle(SparkHandle):
 
         return reader
 
-    def write_or_append(
-        self, df: DataFrame, mode: str, mergeSchema: bool = None
-    ) -> None:
+    def write_or_append(self, mode: str, mergeSchema: bool = None) -> None:
+        #######################################
+        # Note that there is no input dataframe
+        #######################################
         assert mode in {"append", "overwrite", "complete"}
 
         if mode == "overwrite":
             mode = "complete"
 
+        # Before writing
+        # One needs to read the stream before
+        writer = self.read()
+
+        # What if someone wants a select filter?
+
         writer = (
-            df.writeStream.option("checkpointLocation", self._checkpoint_path)
+            writer.writeStream.option("checkpointLocation", self._checkpoint_path)
             .outputMode(mode)
             .trigger(availableNow=True)
         )
@@ -74,10 +81,10 @@ class AutoLoaderHandle(SparkHandle):
         writer.awaitTermination()
 
     def overwrite(self, df: DataFrame, mergeSchema: bool = None) -> None:
-        return self.write_or_append(df, "complete", mergeSchema)
+        return self.write_or_append("complete", mergeSchema)
 
     def append(self, df: DataFrame, mergeSchema: bool = None) -> None:
-        return self.write_or_append(df, "append", mergeSchema)
+        return self.write_or_append("append", mergeSchema)
 
     # Truncate checkpoints too
     def truncate(self) -> None:
