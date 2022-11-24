@@ -80,7 +80,7 @@ jobs:
         shell: pwsh
         run: |
           .github/submit/submit_test_job.ps1  `
-            -sparkVersion "9.1.x-scala2.12" `
+            -sparkVersion "10.4.x-scala2.12" `
             -testJobDetails job91.json
 
       - name: Wait 2 min for things to settle

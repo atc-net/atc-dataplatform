@@ -67,6 +67,7 @@ class AutoLoaderHandle(SparkHandle):
         # Note that there is no input dataframe
         #######################################
         assert mode in {"append", "overwrite", "complete"}
+        assert df.isStreaming
 
         if mode == "overwrite":
             mode = "complete"
