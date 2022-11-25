@@ -1,7 +1,6 @@
 from typing import Protocol, Union
 
 from pyspark.sql import DataFrame
-from pyspark.sql.streaming import StreamingQuery
 
 from atc.etl import Loader
 
