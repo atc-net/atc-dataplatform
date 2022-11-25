@@ -7,7 +7,7 @@ from atc.etl import Loader
 
 
 class Overwritable(Protocol):
-    def overwrite(self, df: DataFrame) -> Union[None, StreamingQuery]:
+    def overwrite(self, df: DataFrame) -> None:
         pass
 
 
