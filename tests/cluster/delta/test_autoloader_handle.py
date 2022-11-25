@@ -21,6 +21,7 @@ class AutoloaderTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         Configurator().clear_all_configurations()
+        Configurator().set_debug()
 
         if not file_exists(cls.eh_checkpoint_path):
             init_dbutils().fs.mkdirs(cls.eh_checkpoint_path)
@@ -124,6 +125,8 @@ class AutoloaderTests(unittest.TestCase):
         AutoLoaderHandle.from_tc("MyTblMirror")
         AutoLoaderHandle.from_tc("MyTbl2")
         AutoLoaderHandle.from_tc("MyTbl3")
+        AutoLoaderHandle.from_tc("MyTbl4")
+        AutoLoaderHandle.from_tc("MyTbl5")
         AutoLoaderHandle.from_tc("AtcEh")
         AutoLoaderHandle.from_tc("EhSink")
 
@@ -138,7 +141,7 @@ class AutoloaderTests(unittest.TestCase):
         ah.create_hive_table()
 
         # test hive access:
-        df = Spark.get().table("TestDb.TestTbl")
+        df = DeltaHandle.from_tc("MyTbl").read()
         self.assertTrue(6, df.count())
 
     def test_04_read(self):
