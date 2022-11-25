@@ -3,10 +3,12 @@ from typing import List
 from atc_tools.testing import DataframeTestCase
 
 from atc import Configurator
-from atc.delta import DbHandle
+from atc.delta import DbHandle, DeltaHandle
 from atc.delta.autoloader_handle import AutoLoaderHandle
 from atc.etl.loaders.UpsertLoader import UpsertLoader
+from atc.functions import init_dbutils
 from atc.utils import DataframeCreator
+from atc.utils.FileExists import file_exists
 from atc.utils.stop_all_streams import stop_all_streams
 from tests.cluster.delta import extras
 from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
@@ -31,14 +33,55 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
     dummy_columns: List[str] = ["col1", "col2", "col3"]
 
     dummy_schema = None
-    target_dh_dummy: AutoLoaderHandle = None
+    target_dh_dummy: DeltaHandle = None
+    target_ah_dummy: AutoLoaderHandle = None
 
     @classmethod
     def setUpClass(cls) -> None:
         Configurator().add_resource_path(extras)
         Configurator().set_debug()
 
-        cls.target_dh_dummy = AutoLoaderHandle.from_tc("UpsertLoaderDummy")
+        # Test 01 view
+        view1_checkpoint_path = "tmp/test1_df/_checkpoint_path"
+        Configurator().register(
+            "Test1View",
+            {
+                "name": "test1_df",
+                "checkpoint_path": view1_checkpoint_path,
+            },
+        )
+
+        if not file_exists(view1_checkpoint_path):
+            init_dbutils().fs.mkdirs(view1_checkpoint_path)
+
+        # Test 02 view
+        view2_checkpoint_path = "tmp/test2_df/_checkpoint_path"
+        Configurator().register(
+            "Test2View",
+            {
+                "name": "test2_df",
+                "checkpoint_path": view2_checkpoint_path,
+            },
+        )
+
+        if not file_exists(view2_checkpoint_path):
+            init_dbutils().fs.mkdirs(view2_checkpoint_path)
+
+        # Test 03 view
+        view3_checkpoint_path = "tmp/test3_df/_checkpoint_path"
+        Configurator().register(
+            "Test3View",
+            {
+                "name": "test3_df",
+                "checkpoint_path": view3_checkpoint_path,
+            },
+        )
+
+        if not file_exists(view3_checkpoint_path):
+            init_dbutils().fs.mkdirs(view3_checkpoint_path)
+
+        cls.target_ah_dummy = AutoLoaderHandle.from_tc("UpsertLoaderDummy")
+        cls.target_dh_dummy = DeltaHandle.from_tc("UpsertLoaderDummy")
 
         SparkSqlExecutor().execute_sql_file("upsertloader-test")
 
@@ -55,13 +98,17 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
     def test_01_can_perform_incremental_on_empty(self):
 
-        loader = UpsertLoader(handle=self.target_dh_dummy, join_cols=self.join_cols)
+        loader = UpsertLoader(handle=self.target_ah_dummy, join_cols=self.join_cols)
 
         df_source = DataframeCreator.make_partial(
             self.dummy_schema, self.dummy_columns, self.data1
         )
 
-        loader.save(df_source)
+        df_source.createOrReplaceTempView("test1_df")
+
+        read_tes1_df = AutoLoaderHandle.from_tc("Test1View").read()
+
+        loader.save(read_tes1_df)
         self.assertDataframeMatches(self.target_dh_dummy.read(), None, self.data1)
 
     def test_02_can_perform_incremental_append(self):
@@ -69,13 +116,17 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
         existing_rows = self.target_dh_dummy.read().collect()
         self.assertEqual(2, len(existing_rows))
 
-        loader = UpsertLoader(handle=self.target_dh_dummy, join_cols=self.join_cols)
+        loader = UpsertLoader(handle=self.target_ah_dummy, join_cols=self.join_cols)
 
         df_source = DataframeCreator.make_partial(
             self.dummy_schema, self.dummy_columns, self.data2
         )
 
-        loader.save(df_source)
+        df_source.createOrReplaceTempView("test2_df")
+
+        read_tes2_df = AutoLoaderHandle.from_tc("Test2View").read()
+
+        loader.save(read_tes2_df)
 
         self.assertDataframeMatches(
             self.target_dh_dummy.read(), None, self.data1 + self.data2
@@ -92,6 +143,10 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
             self.dummy_schema, self.dummy_columns, self.data3
         )
 
-        loader.save(df_source)
+        df_source.createOrReplaceTempView("test3_df")
+
+        read_tes3_df = AutoLoaderHandle.from_tc("Test3View").read()
+
+        loader.save(read_tes3_df)
 
         self.assertDataframeMatches(self.target_dh_dummy.read(), None, self.data4)

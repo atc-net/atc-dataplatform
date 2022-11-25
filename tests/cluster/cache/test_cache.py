@@ -30,7 +30,7 @@ class ChildCacher(CachedLoader):
         return self.deleted
 
 
-@unittest.skip("TEST FAILS.. skips while developing on PR..")
+@unittest.skip("TEST FAILS USING SPARK 10.4")
 class CachedLoaderTests(unittest.TestCase):
 
     params: CachedLoaderParameters
