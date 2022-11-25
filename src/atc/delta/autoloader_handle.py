@@ -88,21 +88,18 @@ class AutoLoaderHandle(SparkHandle):
     def append(self, df: DataFrame, mergeSchema: bool = None) -> None:
         return self.write_or_append(df, "append", mergeSchema)
 
-    # Truncate checkpoints too
     def truncate(self) -> None:
         Spark.get().sql(f"TRUNCATE TABLE {self._name};")
 
-        # Should maybe check if checkpoint path exists?
-        init_dbutils().fs.rm(self._checkpoint_path, True)
+        if file_exists(self._checkpoint_path):
+            init_dbutils().fs.rm(self._checkpoint_path, True)
 
-    # What about check points?
     def drop(self) -> None:
         Spark.get().sql(f"DROP TABLE IF EXISTS {self._name};")
 
-        # Should maybe check if checkpoint path exists?
-        init_dbutils().fs.rm(self._checkpoint_path, True)
+        if file_exists(self._checkpoint_path):
+            init_dbutils().fs.rm(self._checkpoint_path, True)
 
-    # What about check points?
     def drop_and_delete(self) -> None:
         self.drop()
         if self._location:
