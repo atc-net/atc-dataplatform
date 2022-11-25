@@ -76,6 +76,7 @@ class AutoloaderTests(unittest.TestCase):
         tc.register(
             "MyTbl4",
             {
+                "name": "TestDb{ID}.TestTbl4",
                 "path": "/mnt/atc/silver/testdb{ID}/testtbl4",
                 "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl4",
             },
@@ -84,6 +85,7 @@ class AutoloaderTests(unittest.TestCase):
         tc.register(
             "MyTbl5",
             {
+                "name": "TestDb{ID}.TestTbl5",
                 "path": "/mnt/atc/silver/testdb{ID}/testtbl5",
                 "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl5",
             },
@@ -168,7 +170,7 @@ class AutoloaderTests(unittest.TestCase):
 
     def test_07_write_path_only(self):
         self._overwrite_two_rows_to_table("MyTbl")
-        # check that we can write to the table with no path
+        # check that we can write to the table with no "name" property
         ah = AutoLoaderHandle.from_tc("MyTbl").read()
 
         ah3 = AutoLoaderHandle.from_tc("MyTbl3")
