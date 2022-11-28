@@ -16,7 +16,6 @@ from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
 
 
 class UpsertLoaderTestsAutoloader(DataframeTestCase):
-    target_id = "UpsertLoaderDummy"
 
     join_cols = ["col1", "col2"]
 
@@ -47,6 +46,7 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
             "AutoDbUpsert",
             {"name": "TestUpsertAutoDb{ID}", "path": "/mnt/atc/silver/testdb{ID}"},
         )
+        DbHandle.from_tc("AutoDbUpsert").create()
 
         cls._configure_views(tc)
 
@@ -63,7 +63,7 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        DbHandle.from_tc("UpsertLoaderDummy").drop_cascade()
+        DbHandle.from_tc("UpsertLoaderDb").drop_cascade()
         DbHandle.from_tc("AutoDbUpsert").drop_cascade()
         cls._remove_checkpoints()
         stop_all_streams()
