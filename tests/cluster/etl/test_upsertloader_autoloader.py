@@ -48,47 +48,7 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
             {"name": "TestUpsertAutoDb{ID}", "path": "/mnt/atc/silver/testdb{ID}"},
         )
 
-        # Test 01 view
-        view1_checkpoint_path = "tmp/test1_df/_checkpoint_path"
-        Configurator().register(
-            "Test1View",
-            {
-                "name": "TestUpsertAutoDb{ID}.test1_df",
-                "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/test1_df",
-                "checkpoint_path": view1_checkpoint_path,
-            },
-        )
-
-        if not file_exists(view1_checkpoint_path):
-            init_dbutils().fs.mkdirs(view1_checkpoint_path)
-
-        # Test 02 view
-        view2_checkpoint_path = "tmp/test2_df/_checkpoint_path"
-        Configurator().register(
-            "Test2View",
-            {
-                "name": "TestUpsertAutoDb{ID}.test2_df",
-                "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/test2_df",
-                "checkpoint_path": view2_checkpoint_path,
-            },
-        )
-
-        if not file_exists(view2_checkpoint_path):
-            init_dbutils().fs.mkdirs(view2_checkpoint_path)
-
-        # Test 03 view
-        view3_checkpoint_path = "tmp/test3_df/_checkpoint_path"
-        Configurator().register(
-            "Test3View",
-            {
-                "name": "TestUpsertAutoDb{ID}.test3_df",
-                "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/test3_df",
-                "checkpoint_path": view3_checkpoint_path,
-            },
-        )
-
-        if not file_exists(view3_checkpoint_path):
-            init_dbutils().fs.mkdirs(view3_checkpoint_path)
+        cls._configure_views(tc)
 
         cls.target_ah_dummy = AutoLoaderHandle.from_tc("UpsertLoaderDummy")
         cls.target_dh_dummy = DeltaHandle.from_tc("UpsertLoaderDummy")
@@ -105,6 +65,7 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
     def tearDownClass(cls) -> None:
         DbHandle.from_tc("UpsertLoaderDummy").drop_cascade()
         DbHandle.from_tc("AutoDbUpsert").drop_cascade()
+        cls._remove_checkpoints()
         stop_all_streams()
 
     def test_01_can_perform_incremental_on_empty(self):
@@ -170,3 +131,26 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
         )
 
         dh.overwrite(df_source)
+
+    @staticmethod
+    def _configure_views(tc: Configurator):
+        for view_name in ["Test1View", "Test2View", "Test3View"]:
+            view_checkpoint_path = "tmp/" + view_name + "/_checkpoint_path"
+            tc.register(
+                view_name,
+                {
+                    "name": "TestUpsertAutoDb{ID}." + view_name,
+                    "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/" + view_name,
+                    "checkpoint_path": view_checkpoint_path,
+                },
+            )
+
+            if not file_exists(view_checkpoint_path):
+                init_dbutils().fs.mkdirs(view_checkpoint_path)
+
+    @staticmethod
+    def _remove_checkpoints():
+        for view_name in ["Test1View", "Test2View", "Test3View"]:
+            view_checkpoint_path = "tmp/" + view_name + "/_checkpoint_path"
+            if file_exists(view_checkpoint_path):
+                init_dbutils().fs.rm(view_checkpoint_path)
