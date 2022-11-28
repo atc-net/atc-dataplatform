@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from atc_tools.testing import DataframeTestCase
 
@@ -7,6 +7,7 @@ from atc.delta import DbHandle, DeltaHandle
 from atc.delta.autoloader_handle import AutoLoaderHandle
 from atc.etl.loaders.UpsertLoader import UpsertLoader
 from atc.functions import init_dbutils
+from atc.spark import Spark
 from atc.utils import DataframeCreator
 from atc.utils.FileExists import file_exists
 from atc.utils.stop_all_streams import stop_all_streams
@@ -38,15 +39,22 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        Configurator().add_resource_path(extras)
-        Configurator().set_debug()
+        tc = Configurator()
+        tc.add_resource_path(extras)
+        tc.set_debug()
+
+        tc.register(
+            "AutoDbUpsert",
+            {"name": "TestUpsertAutoDb{ID}", "path": "/mnt/atc/silver/testdb{ID}"},
+        )
 
         # Test 01 view
         view1_checkpoint_path = "tmp/test1_df/_checkpoint_path"
         Configurator().register(
             "Test1View",
             {
-                "name": "test1_df",
+                "name": "TestUpsertAutoDb{ID}.test1_df",
+                "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/test1_df",
                 "checkpoint_path": view1_checkpoint_path,
             },
         )
@@ -59,7 +67,8 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
         Configurator().register(
             "Test2View",
             {
-                "name": "test2_df",
+                "name": "TestUpsertAutoDb{ID}.test2_df",
+                "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/test2_df",
                 "checkpoint_path": view2_checkpoint_path,
             },
         )
@@ -72,7 +81,8 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
         Configurator().register(
             "Test3View",
             {
-                "name": "test3_df",
+                "name": "TestUpsertAutoDb{ID}.test3_df",
+                "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/test3_df",
                 "checkpoint_path": view3_checkpoint_path,
             },
         )
@@ -93,18 +103,16 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        DbHandle.from_tc("UpsertLoaderDb").drop_cascade()
+        DbHandle.from_tc("UpsertLoaderDummy").drop_cascade()
+        DbHandle.from_tc("AutoDbUpsert").drop_cascade()
         stop_all_streams()
 
     def test_01_can_perform_incremental_on_empty(self):
 
+        self._create_test_source_data("Test1View", self.data1)
+
+        # Use autoloader
         loader = UpsertLoader(handle=self.target_ah_dummy, join_cols=self.join_cols)
-
-        df_source = DataframeCreator.make_partial(
-            self.dummy_schema, self.dummy_columns, self.data1
-        )
-
-        df_source.createOrReplaceTempView("test1_df")
 
         read_tes1_df = AutoLoaderHandle.from_tc("Test1View").read()
 
@@ -118,11 +126,7 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
         loader = UpsertLoader(handle=self.target_ah_dummy, join_cols=self.join_cols)
 
-        df_source = DataframeCreator.make_partial(
-            self.dummy_schema, self.dummy_columns, self.data2
-        )
-
-        df_source.createOrReplaceTempView("test2_df")
+        self._create_test_source_data("Test2View", self.data2)
 
         read_tes2_df = AutoLoaderHandle.from_tc("Test2View").read()
 
@@ -139,14 +143,30 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
         loader = UpsertLoader(handle=self.target_dh_dummy, join_cols=self.join_cols)
 
-        df_source = DataframeCreator.make_partial(
-            self.dummy_schema, self.dummy_columns, self.data3
-        )
-
-        df_source.createOrReplaceTempView("test3_df")
+        self._create_test_source_data("Test3View", self.data3)
 
         read_tes3_df = AutoLoaderHandle.from_tc("Test3View").read()
 
         loader.save(read_tes3_df)
 
         self.assertDataframeMatches(self.target_dh_dummy.read(), None, self.data4)
+
+    def _create_test_source_data(self, tableid: str, data: List[Tuple[int, int, str]]):
+
+        dh = DeltaHandle.from_tc(tableid)
+
+        Spark.get().sql(
+            f"""
+                                            CREATE TABLE {dh.get_tablename()}
+                                            (
+                                            id int,
+                                            name string
+                                            )
+                                        """
+        )
+
+        df_source = DataframeCreator.make_partial(
+            self.dummy_schema, self.dummy_columns, data
+        )
+
+        dh.overwrite(df_source)
