@@ -124,7 +124,8 @@ class AutoLoaderHandle(SparkHandle):
         # # Find records that need to be updated in the target (happens seldom)
         #
         # # Define the column to be used for checking for new rows
-        # # Checking the null-ness of one right row is sufficient to mark the row as new,
+        # # Checking the null-ness of one right row
+        # is sufficient to mark the row as new,
         # # since null keys are disallowed.
         #
         # _, merge_required = CheckDfMerge(
