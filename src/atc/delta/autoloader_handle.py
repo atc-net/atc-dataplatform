@@ -4,11 +4,14 @@ from pyspark.sql import DataFrame
 from pyspark.sql.streaming import DataStreamWriter
 
 from atc.configurator.configurator import Configurator
+
+# from atc.delta import DeltaHandle
 from atc.functions import init_dbutils
 from atc.spark import Spark
 from atc.tables.SparkHandle import SparkHandle
 from atc.utils import GetMergeStatement
-from atc.utils.CheckDfMerge import CheckDfMerge
+
+# from atc.utils.CheckDfMerge import CheckDfMerge
 from atc.utils.FileExists import file_exists
 
 
@@ -106,28 +109,33 @@ class AutoLoaderHandle(SparkHandle):
             init_dbutils().fs.rm(self._location, True)
 
     def upsert(self, df: DataFrame, join_cols: List[str]) -> None:
+        assert df.isStreaming
 
-        df_target = self.read()
-
-        # If the target is empty, always do faster full load
-        if len(df_target.take(1)) == 0:
-            return self.overwrite(df)
-
-        # Find records that need to be updated in the target (happens seldom)
-
-        # Define the column to be used for checking for new rows
-        # Checking the null-ness of one right row is sufficient to mark the row as new,
-        # since null keys are disallowed.
-
-        df, merge_required = CheckDfMerge(
-            df=df,
-            df_target=df_target,
-            join_cols=join_cols,
-            avoid_cols=[],
-        )
-
-        if not merge_required:
-            return self.append(df)
+        # dh_helper = DeltaHandle(
+        #     name=self._name, location=self._location, data_format=self._data_format
+        # )
+        #
+        # df_target = self.read()
+        #
+        # # If the target is empty, always do faster full load
+        # if len(dh_helper.read().take(1)) == 0:
+        #     return self.overwrite(df)
+        #
+        # # Find records that need to be updated in the target (happens seldom)
+        #
+        # # Define the column to be used for checking for new rows
+        # # Checking the null-ness of one right row is sufficient to mark the row as new,
+        # # since null keys are disallowed.
+        #
+        # _, merge_required = CheckDfMerge(
+        #     df=df,
+        #     df_target=df_target,
+        #     join_cols=join_cols,
+        #     avoid_cols=[],
+        # )
+        #
+        # if not merge_required:
+        #     return self.append(df)
 
         target_table_name = self.get_tablename()
         non_join_cols = [col for col in df.columns if col not in join_cols]
