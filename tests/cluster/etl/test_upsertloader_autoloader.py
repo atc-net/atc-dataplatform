@@ -32,14 +32,11 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
     data4 = [(1, 2, "baz"), (5, 6, "boo"), (5, 7, "spam"), (7, 8, "bar")]
 
     dummy_columns: List[str] = ["col1", "col2", "col3"]
+    source_table_id: str = "Test1Table"
 
     dummy_schema = None
     target_dh_dummy: DeltaHandle = None
     target_ah_dummy: AutoLoaderHandle = None
-
-    def __init__(self, methodName: str = ...):
-        super().__init__(methodName)
-        self.source_table_id = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -53,13 +50,14 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
         )
         DbHandle.from_tc("AutoDbUpsert").create()
 
-        source_table_id = "Test1Table"
-        source_table_checkpoint_path = "tmp/" + source_table_id + "/_checkpoint_path"
+        source_table_checkpoint_path = (
+            "tmp/" + cls.source_table_id + "/_checkpoint_path"
+        )
         tc.register(
-            source_table_id,
+            cls.source_table_id,
             {
-                "name": "TestUpsertAutoDb{ID}." + source_table_id,
-                "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/" + source_table_id,
+                "name": "TestUpsertAutoDb{ID}." + cls.source_table_id,
+                "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/" + cls.source_table_id,
                 "checkpoint_path": source_table_checkpoint_path,
             },
         )
@@ -68,7 +66,7 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
             init_dbutils().fs.mkdirs(source_table_checkpoint_path)
 
         # Autoloader pointing at source table
-        cls.source_ah = AutoLoaderHandle.from_tc(source_table_id)
+        cls.source_ah = AutoLoaderHandle.from_tc(cls.source_table_id)
 
         # Autoloader/Deltahandle pointing at target table
         cls.target_ah_dummy = AutoLoaderHandle.from_tc("UpsertLoaderDummy")
