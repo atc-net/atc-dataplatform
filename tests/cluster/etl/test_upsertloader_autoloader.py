@@ -80,6 +80,10 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
         loader.save(read_tes1_df)
         self.assertDataframeMatches(self.target_dh_dummy.read(), None, self.data1)
 
+        # Check that 2 rows are inserted.
+        existing_rows = self.target_dh_dummy.read().collect()
+        self.assertEqual(2, len(existing_rows))
+
     def test_02_can_perform_incremental_append(self):
         """The target table is already filled from before."""
         existing_rows = self.target_dh_dummy.read().collect()
@@ -87,9 +91,9 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
         loader = UpsertLoader(handle=self.target_ah_dummy, join_cols=self.join_cols)
 
-        self._create_test_source_data("Test2View", self.data2)
+        self._create_test_source_data("Test1View", self.data2)
 
-        read_tes2_df = AutoLoaderHandle.from_tc("Test2View").read()
+        read_tes2_df = AutoLoaderHandle.from_tc("Test1View").read()
 
         loader.save(read_tes2_df)
 
@@ -104,9 +108,9 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
         loader = UpsertLoader(handle=self.target_dh_dummy, join_cols=self.join_cols)
 
-        self._create_test_source_data("Test3View", self.data3)
+        self._create_test_source_data("Test1View", self.data3)
 
-        read_tes3_df = AutoLoaderHandle.from_tc("Test3View").read()
+        read_tes3_df = AutoLoaderHandle.from_tc("Test1View").read()
 
         loader.save(read_tes3_df)
 
@@ -118,7 +122,7 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
         Spark.get().sql(
             f"""
-                                            CREATE TABLE {dh.get_tablename()}
+                                            CREATE TABLE IF NOT EXISTS {dh.get_tablename()}
                                             (
                                             id int,
                                             name string
