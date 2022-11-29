@@ -17,6 +17,7 @@ from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
 
 class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
+    source_table_checkpoint_path = None
     join_cols = ["col1", "col2"]
 
     data1 = [
@@ -36,6 +37,10 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
     target_dh_dummy: DeltaHandle = None
     target_ah_dummy: AutoLoaderHandle = None
 
+    def __init__(self, methodName: str = ...):
+        super().__init__(methodName)
+        self.source_table_id = None
+
     @classmethod
     def setUpClass(cls) -> None:
         tc = Configurator()
@@ -48,11 +53,28 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
         )
         DbHandle.from_tc("AutoDbUpsert").create()
 
-        cls._configure_views(tc)
+        source_table_id = "Test1Table"
+        source_table_checkpoint_path = "tmp/" + source_table_id + "/_checkpoint_path"
+        tc.register(
+            source_table_id,
+            {
+                "name": "TestUpsertAutoDb{ID}." + source_table_id,
+                "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/" + source_table_id,
+                "checkpoint_path": source_table_checkpoint_path,
+            },
+        )
 
+        if not file_exists(source_table_checkpoint_path):
+            init_dbutils().fs.mkdirs(source_table_checkpoint_path)
+
+        # Autoloader pointing at source table
+        cls.source_ah = AutoLoaderHandle.from_tc(source_table_id)
+
+        # Autoloader/Deltahandle pointing at target table
         cls.target_ah_dummy = AutoLoaderHandle.from_tc("UpsertLoaderDummy")
         cls.target_dh_dummy = DeltaHandle.from_tc("UpsertLoaderDummy")
 
+        # Create target table
         SparkSqlExecutor().execute_sql_file("upsertloader-test")
 
         cls.dummy_schema = cls.target_dh_dummy.read().schema
@@ -65,24 +87,23 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
     def tearDownClass(cls) -> None:
         DbHandle.from_tc("UpsertLoaderDb").drop_cascade()
         DbHandle.from_tc("AutoDbUpsert").drop_cascade()
-        cls._remove_checkpoints()
+
+        if file_exists(cls.source_table_checkpoint_path):
+            init_dbutils().fs.rm(cls.source_table_checkpoint_path)
         stop_all_streams()
 
     def test_01_can_perform_incremental_on_empty(self):
+        """Stream two rows to the empty target table"""
 
-        self._create_test_source_data("Test1View", self.data1)
+        self._create_test_source_data(data=self.data1)
 
-        # Use autoloader
         loader = UpsertLoader(handle=self.target_ah_dummy, join_cols=self.join_cols)
 
-        read_tes1_df = AutoLoaderHandle.from_tc("Test1View").read()
+        source_df = self.source_ah.read()
 
-        loader.save(read_tes1_df)
+        loader.save(source_df)
+
         self.assertDataframeMatches(self.target_dh_dummy.read(), None, self.data1)
-
-        # Check that 2 rows are inserted.
-        existing_rows = self.target_dh_dummy.read().collect()
-        self.assertEqual(2, len(existing_rows))
 
     def test_02_can_perform_incremental_append(self):
         """The target table is already filled from before."""
@@ -91,11 +112,11 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
         loader = UpsertLoader(handle=self.target_ah_dummy, join_cols=self.join_cols)
 
-        self._create_test_source_data("Test1View", self.data2)
+        self._create_test_source_data(data=self.data2)
 
-        read_tes2_df = AutoLoaderHandle.from_tc("Test1View").read()
+        source_df = self.source_ah.read()
 
-        loader.save(read_tes2_df)
+        loader.save(source_df)
 
         self.assertDataframeMatches(
             self.target_dh_dummy.read(), None, self.data1 + self.data2
@@ -106,17 +127,24 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
         existing_rows = self.target_dh_dummy.read().collect()
         self.assertEqual(3, len(existing_rows))
 
-        loader = UpsertLoader(handle=self.target_dh_dummy, join_cols=self.join_cols)
+        loader = UpsertLoader(handle=self.target_ah_dummy, join_cols=self.join_cols)
 
-        self._create_test_source_data("Test1View", self.data3)
+        self._create_test_source_data(data=self.data3)
 
-        read_tes3_df = AutoLoaderHandle.from_tc("Test1View").read()
+        source_df = self.source_ah.read()
 
-        loader.save(read_tes3_df)
+        loader.save(source_df)
 
         self.assertDataframeMatches(self.target_dh_dummy.read(), None, self.data4)
 
-    def _create_test_source_data(self, tableid: str, data: List[Tuple[int, int, str]]):
+    def _create_test_source_data(
+        self, tableid: str = None, data: List[Tuple[int, int, str]] = None
+    ):
+
+        if tableid is None:
+            tableid = self.source_table_id
+        if data is None:
+            raise ValueError("Testdata missing.")
 
         dh = DeltaHandle.from_tc(tableid)
 
@@ -135,26 +163,3 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
         )
 
         dh.append(df_source)
-
-    @staticmethod
-    def _configure_views(tc: Configurator):
-        for view_name in ["Test1View", "Test2View", "Test3View"]:
-            view_checkpoint_path = "tmp/" + view_name + "/_checkpoint_path"
-            tc.register(
-                view_name,
-                {
-                    "name": "TestUpsertAutoDb{ID}." + view_name,
-                    "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/" + view_name,
-                    "checkpoint_path": view_checkpoint_path,
-                },
-            )
-
-            if not file_exists(view_checkpoint_path):
-                init_dbutils().fs.mkdirs(view_checkpoint_path)
-
-    @staticmethod
-    def _remove_checkpoints():
-        for view_name in ["Test1View", "Test2View", "Test3View"]:
-            view_checkpoint_path = "tmp/" + view_name + "/_checkpoint_path"
-            if file_exists(view_checkpoint_path):
-                init_dbutils().fs.rm(view_checkpoint_path)
