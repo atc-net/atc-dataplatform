@@ -79,7 +79,7 @@ class AutoloaderTests(unittest.TestCase):
         # test instantiation without error
         DbHandle.from_tc("MyDb")
         AutoloaderStreamHandle.from_tc("AvroSource")
-        AutoloaderStreamHandle.from_tc("AvroSink")
+        DeltaStreamHandle.from_tc("AvroSink")
 
     def test_01_read_avro(self):
 
