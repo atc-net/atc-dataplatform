@@ -6,7 +6,7 @@ from pyspark.sql.utils import AnalysisException
 
 from atc import Configurator
 from atc.delta import DbHandle, DeltaHandle
-from atc.delta.autoloader_handle import AutoLoaderHandle
+from atc.delta.autoloaderstream_handle import AutoloaderStreamHandle
 from atc.etl import Orchestrator
 from atc.etl.extractors import SimpleExtractor
 from atc.etl.loaders import SimpleLoader
@@ -134,14 +134,14 @@ class AutoloaderTests(unittest.TestCase):
 
         # test instantiation without error
         DbHandle.from_tc("MyDb")
-        AutoLoaderHandle.from_tc("MyTbl")
-        AutoLoaderHandle.from_tc("MyTblMirror")
-        AutoLoaderHandle.from_tc("MyTbl2")
-        AutoLoaderHandle.from_tc("MyTbl3")
-        AutoLoaderHandle.from_tc("MyTbl4")
-        AutoLoaderHandle.from_tc("MyTbl5")
-        AutoLoaderHandle.from_tc("AvroSource")
-        AutoLoaderHandle.from_tc("AvroSink")
+        AutoloaderStreamHandle.from_tc("MyTbl")
+        AutoloaderStreamHandle.from_tc("MyTblMirror")
+        AutoloaderStreamHandle.from_tc("MyTbl2")
+        AutoloaderStreamHandle.from_tc("MyTbl3")
+        AutoloaderStreamHandle.from_tc("MyTbl4")
+        AutoloaderStreamHandle.from_tc("MyTbl5")
+        AutoloaderStreamHandle.from_tc("AvroSource")
+        AutoloaderStreamHandle.from_tc("AvroSink")
 
     def test_02_write_data_with_deltahandle(self):
         self._overwrite_two_rows_to_table("MyTbl")
@@ -150,7 +150,7 @@ class AutoloaderTests(unittest.TestCase):
         db = DbHandle.from_tc("MyDb")
         db.create()
 
-        ah = AutoLoaderHandle.from_tc("MyTbl")
+        ah = AutoloaderStreamHandle.from_tc("MyTbl")
         ah.create_hive_table()
 
         # test hive access:
@@ -158,11 +158,11 @@ class AutoloaderTests(unittest.TestCase):
         self.assertTrue(6, df.count())
 
     def test_04_read(self):
-        df = AutoLoaderHandle.from_tc("MyTbl").read()
+        df = AutoloaderStreamHandle.from_tc("MyTbl").read()
         self.assertTrue(df.isStreaming)
 
     def test_05_truncate(self):
-        ah = AutoLoaderHandle.from_tc("MyTbl")
+        ah = AutoloaderStreamHandle.from_tc("MyTbl")
         ah.truncate()
 
         result = DeltaHandle.from_tc("MyTbl").read()
@@ -174,10 +174,12 @@ class AutoloaderTests(unittest.TestCase):
 
         o = Orchestrator()
         o.extract_from(
-            SimpleExtractor(AutoLoaderHandle.from_tc("MyTbl"), dataset_key="MyTbl")
+            SimpleExtractor(
+                AutoloaderStreamHandle.from_tc("MyTbl"), dataset_key="MyTbl"
+            )
         )
         o.load_into(
-            SimpleLoader(AutoLoaderHandle.from_tc("MyTblMirror"), mode="append")
+            SimpleLoader(AutoloaderStreamHandle.from_tc("MyTblMirror"), mode="append")
         )
         o.execute()
 
@@ -187,9 +189,9 @@ class AutoloaderTests(unittest.TestCase):
     def test_07_write_path_only(self):
         self._overwrite_two_rows_to_table("MyTbl")
         # check that we can write to the table with no "name" property
-        ah = AutoLoaderHandle.from_tc("MyTbl").read()
+        ah = AutoloaderStreamHandle.from_tc("MyTbl").read()
 
-        ah3 = AutoLoaderHandle.from_tc("MyTbl3")
+        ah3 = AutoloaderStreamHandle.from_tc("MyTbl3")
 
         ah3.append(ah, mergeSchema=True)
 
@@ -198,7 +200,7 @@ class AutoloaderTests(unittest.TestCase):
         self.assertEqual(2, result.count())
 
     def test_08_delete(self):
-        dh = AutoLoaderHandle.from_tc("MyTbl")
+        dh = AutoloaderStreamHandle.from_tc("MyTbl")
         dh.drop_and_delete()
 
         with self.assertRaises(AnalysisException):
@@ -208,7 +210,7 @@ class AutoloaderTests(unittest.TestCase):
 
         self._add_avro_data_to_source([(1, "a"), (2, "b")])
 
-        ah_sink = AutoLoaderHandle.from_tc("AvroSink")
+        ah_sink = AutoloaderStreamHandle.from_tc("AvroSink")
         Spark.get().sql(
             f"""
                     CREATE TABLE {ah_sink.get_tablename()}
@@ -222,7 +224,7 @@ class AutoloaderTests(unittest.TestCase):
         o = Orchestrator()
         o.extract_from(
             SimpleExtractor(
-                AutoLoaderHandle.from_tc("AvroSource"), dataset_key="AvroSource"
+                AutoloaderStreamHandle.from_tc("AvroSource"), dataset_key="AvroSource"
             )
         )
         o.load_into(SimpleLoader(ah_sink, mode="append"))
@@ -243,7 +245,7 @@ class AutoloaderTests(unittest.TestCase):
         self.assertTrue(4, result.count())
 
     def test_10_partitioning(self):
-        dh = AutoLoaderHandle.from_tc("MyTbl4")
+        dh = AutoloaderStreamHandle.from_tc("MyTbl4")
         Spark.get().sql(
             f"""
             CREATE TABLE {dh.get_tablename()}
@@ -258,7 +260,7 @@ class AutoloaderTests(unittest.TestCase):
 
         self.assertEqual(dh.get_partitioning(), ["colB", "colA"])
 
-        dh2 = AutoLoaderHandle.from_tc("MyTbl5")
+        dh2 = AutoloaderStreamHandle.from_tc("MyTbl5")
         Spark.get().sql(
             f"""
             CREATE TABLE {dh2.get_tablename()}

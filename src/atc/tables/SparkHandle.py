@@ -5,7 +5,7 @@ from atc.tables import TableHandle
 
 
 class SparkHandle(TableHandle):
-    """Common handle class for both DeltaHandle and AutoloaderHandle"""
+    """Common handle class for both DeltaHandle and StreamingHandle"""
 
     def __init__(self, name: str, location: str = None, data_format: str = "delta"):
         self._name = name

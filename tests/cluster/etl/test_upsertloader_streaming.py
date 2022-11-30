@@ -4,7 +4,7 @@ from atc_tools.testing import DataframeTestCase
 
 from atc import Configurator
 from atc.delta import DbHandle, DeltaHandle
-from atc.delta.autoloader_handle import AutoLoaderHandle
+from atc.delta.autoloaderstream_handle import AutoloaderStreamHandle
 from atc.etl.loaders.UpsertLoader import UpsertLoader
 from atc.functions import init_dbutils
 from atc.spark import Spark
@@ -15,7 +15,7 @@ from tests.cluster.delta import extras
 from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
 
 
-class UpsertLoaderTestsAutoloader(DataframeTestCase):
+class UpsertLoaderTestsAutoloaderStream(DataframeTestCase):
 
     source_table_checkpoint_path = None
     join_cols = ["col1", "col2"]
@@ -36,7 +36,7 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
     dummy_schema = None
     target_dh_dummy: DeltaHandle = None
-    target_ah_dummy: AutoLoaderHandle = None
+    target_ah_dummy: AutoloaderStreamHandle = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -44,12 +44,14 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
         tc.add_resource_path(extras)
         tc.set_debug()
 
+        # Database for the source table
         tc.register(
             "AutoDbUpsert",
             {"name": "TestUpsertAutoDb{ID}", "path": "/mnt/atc/silver/testdb{ID}"},
         )
         DbHandle.from_tc("AutoDbUpsert").create()
 
+        # Register the source table
         source_table_checkpoint_path = (
             "tmp/" + cls.source_table_id + "/_checkpoint_path"
         )
@@ -66,10 +68,10 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
             init_dbutils().fs.mkdirs(source_table_checkpoint_path)
 
         # Autoloader pointing at source table
-        cls.source_ah = AutoLoaderHandle.from_tc(cls.source_table_id)
+        cls.source_ah = AutoloaderStreamHandle.from_tc(cls.source_table_id)
 
         # Autoloader/Deltahandle pointing at target table
-        cls.target_ah_dummy = AutoLoaderHandle.from_tc("UpsertLoaderDummy")
+        cls.target_ah_dummy = AutoloaderStreamHandle.from_tc("UpsertLoaderDummy")
         cls.target_dh_dummy = DeltaHandle.from_tc("UpsertLoaderDummy")
 
         # Create target table
@@ -77,7 +79,7 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
 
         cls.dummy_schema = cls.target_dh_dummy.read().schema
 
-        # make sure target is empty
+        # make sure target is empty and has a schema
         df_empty = DataframeCreator.make_partial(cls.dummy_schema, [], [])
         cls.target_dh_dummy.overwrite(df_empty)
 
@@ -104,7 +106,10 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
         self.assertDataframeMatches(self.target_dh_dummy.read(), None, self.data1)
 
     def test_02_can_perform_incremental_append(self):
-        """The target table is already filled from before."""
+        """The target table is already filled from before.
+        One new rows appear in the source table to be streamed
+        """
+
         existing_rows = self.target_dh_dummy.read().collect()
         self.assertEqual(2, len(existing_rows))
 
@@ -121,7 +126,9 @@ class UpsertLoaderTestsAutoloader(DataframeTestCase):
         )
 
     def test_03_can_perform_merge(self):
-        """The target table is already filled from before."""
+        """The target table is already filled from before.
+        Two new rows appear in the source table - one of them will be merged.
+        """
         existing_rows = self.target_dh_dummy.read().collect()
         self.assertEqual(3, len(existing_rows))
 

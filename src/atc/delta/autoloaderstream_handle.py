@@ -4,18 +4,14 @@ from pyspark.sql import DataFrame
 from pyspark.sql.streaming import DataStreamWriter
 
 from atc.configurator.configurator import Configurator
-
-# from atc.delta import DeltaHandle
 from atc.functions import init_dbutils
 from atc.spark import Spark
 from atc.tables.SparkHandle import SparkHandle
 from atc.utils import GetMergeStatement
-
-# from atc.utils.CheckDfMerge import CheckDfMerge
 from atc.utils.FileExists import file_exists
 
 
-class AutoLoaderHandle(SparkHandle):
+class AutoloaderStreamHandle(SparkHandle):
     def __init__(
         self,
         *,
@@ -25,15 +21,27 @@ class AutoLoaderHandle(SparkHandle):
         data_format: str = "delta",
         # trigger_type ?
     ):
+        """
+        name: name of the delta table
+
+        checkpoint_path: The location of the checkpoints, <table_name>/_checkpoints
+            The Delta Lake VACUUM function removes all files not managed by Delta Lake
+            but skips any directories that begin with _. You can safely store
+            checkpoints alongside other data and metadata for a Delta table
+            using a directory structure such as <table_name>/_checkpoints
+            See: https://docs.databricks.com/structured-streaming/delta-lake.html
+
+        location: the location of the delta table (Optional)
+
+        data_format: the data format of the files that are read (Default delta)
+
+        """
         super().__init__(name, location, data_format)
 
         self._checkpoint_path = checkpoint_path
 
-        # do we need delta valication?
-        # self._validate()
-
     @classmethod
-    def from_tc(cls, id: str) -> "AutoLoaderHandle":
+    def from_tc(cls, id: str) -> "AutoloaderStreamHandle":
         tc = Configurator()
         return cls(
             name=tc.table_property(id, "name", ""),
@@ -73,8 +81,6 @@ class AutoLoaderHandle(SparkHandle):
         if mode == "overwrite":
             mode = "complete"
 
-        # What if someone wants a select filter?
-
         writer = (
             df.writeStream.option("checkpointLocation", self._checkpoint_path)
             .outputMode(mode)
@@ -110,33 +116,6 @@ class AutoLoaderHandle(SparkHandle):
 
     def upsert(self, df: DataFrame, join_cols: List[str]) -> None:
         assert df.isStreaming
-
-        # dh_helper = DeltaHandle(
-        #     name=self._name, location=self._location, data_format=self._data_format
-        # )
-        #
-        # df_target = self.read()
-        #
-        # # If the target is empty, always do faster full load
-        # if len(dh_helper.read().take(1)) == 0:
-        #     return self.overwrite(df)
-        #
-        # # Find records that need to be updated in the target (happens seldom)
-        #
-        # # Define the column to be used for checking for new rows
-        # # Checking the null-ness of one right row
-        # is sufficient to mark the row as new,
-        # # since null keys are disallowed.
-        #
-        # _, merge_required = CheckDfMerge(
-        #     df=df,
-        #     df_target=df_target,
-        #     join_cols=join_cols,
-        #     avoid_cols=[],
-        # )
-        #
-        # if not merge_required:
-        #     return self.append(df)
 
         target_table_name = self.get_tablename()
         non_join_cols = [col for col in df.columns if col not in join_cols]
@@ -176,9 +155,6 @@ class AutoLoaderHandle(SparkHandle):
         else:
             writer = writer.toTable(self._name)
 
-        # What about this??
-        # .option("path", f"{DA.paths.user_db}/heart_rate_silver.delta")
-
         return writer
 
     def create_hive_table(self) -> None:
@@ -190,53 +166,18 @@ class AutoLoaderHandle(SparkHandle):
             sql += f" USING DELTA LOCATION '{self._location}'"
         Spark.get().sql(sql)
 
-    def recreate_hive_table(self):
-        self.drop()
-        self.create_hive_table()
-
-    def get_partitioning(self):
-        """The result of DESCRIBE TABLE tablename is like this:
-        +-----------------+---------------+-------+
-        |         col_name|      data_type|comment|
-        +-----------------+---------------+-------+
-        |           mycolA|         string|       |
-        |           myColB|            int|       |
-        |                 |               |       |
-        |   # Partitioning|               |       |
-        |           Part 0|         mycolA|       |
-        +-----------------+---------------+-------+
-        but this method return the partitioning in the form ['mycolA'],
-        if there is no partitioning, an empty list is returned.
-        """
-        if self._partitioning is None:
-            # create an iterator object and use it in two steps
-            rows_iter = iter(
-                Spark.get().sql(f"DESCRIBE TABLE {self.get_tablename()}").collect()
-            )
-
-            # roll over the iterator until you see the title line
-            for row in rows_iter:
-                # discard rows until the important section header
-                if row.col_name.strip() == "# Partitioning":
-                    break
-            # at this point, the iterator has moved past the section heading
-            # leaving only the rows with "Part 1" etc.
-
-            # create a list from the rest of the iterator like [(0,colA), (1,colB)]
-            parts = [
-                (int(row.col_name[5:]), row.data_type)
-                for row in rows_iter
-                if row.col_name.startswith("Part ")
-            ]
-            # sort, just in case the parts were out of order.
-            parts.sort()
-
-            # discard the index and put into an ordered list.
-            self._partitioning = [p[1] for p in parts]
-        return self._partitioning
-
 
 class UpsertHelper:
+    """
+    In order to write upserts from a streaming query, this helper class can be used
+    in the foreachBatch method.
+
+    The class helps upserting microbatches to the target table.
+
+    See: https://docs.databricks.com/structured-streaming/
+         delta-lake.html#upsert-from-streaming-queries-using-foreachbatch
+    """
+
     def __init__(self, query: str, update_temp: str = "stream_updates"):
         self.query = query
         self.update_temp = update_temp
