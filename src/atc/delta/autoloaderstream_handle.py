@@ -77,6 +77,7 @@ class AutoloaderStreamHandle(SparkHandle):
 
         assert mode in {"append", "overwrite", "complete"}
         assert df.isStreaming
+        self._validate()
 
         if mode == "overwrite":
             mode = "complete"
@@ -98,24 +99,28 @@ class AutoloaderStreamHandle(SparkHandle):
         return self.write_or_append(df, "append", mergeSchema)
 
     def truncate(self) -> None:
+        self._validate()
         Spark.get().sql(f"TRUNCATE TABLE {self._name};")
 
         if file_exists(self._checkpoint_path):
             init_dbutils().fs.rm(self._checkpoint_path, True)
 
     def drop(self) -> None:
+        self._validate()
         Spark.get().sql(f"DROP TABLE IF EXISTS {self._name};")
 
         if file_exists(self._checkpoint_path):
             init_dbutils().fs.rm(self._checkpoint_path, True)
 
     def drop_and_delete(self) -> None:
+        self._validate()
         self.drop()
         if self._location:
             init_dbutils().fs.rm(self._location, True)
 
     def upsert(self, df: DataFrame, join_cols: List[str]) -> None:
         assert df.isStreaming
+        self._validate()
 
         target_table_name = self.get_tablename()
         non_join_cols = [col for col in df.columns if col not in join_cols]

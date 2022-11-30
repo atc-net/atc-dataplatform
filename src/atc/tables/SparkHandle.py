@@ -1,7 +1,20 @@
 from typing import List, Optional
 
+from atc.atc_exceptions import AtcException
 from atc.spark import Spark
 from atc.tables import TableHandle
+
+
+class DeltaHandleException(AtcException):
+    pass
+
+
+class DeltaHandleInvalidName(DeltaHandleException):
+    pass
+
+
+class DeltaHandleInvalidFormat(DeltaHandleException):
+    pass
 
 
 class SparkHandle(TableHandle):
@@ -13,6 +26,29 @@ class SparkHandle(TableHandle):
         self._data_format = data_format
 
         self._partitioning: Optional[List[str]] = None
+
+    def _validate(self):
+        """Validates that the name is either db.table or just table."""
+        if not self._name:
+            if not self._location:
+                raise DeltaHandleInvalidName(
+                    "Cannot create DeltaHandle without name or path"
+                )
+            self._name = f"delta.`{self._location}`"
+        else:
+            name_parts = self._name.split(".")
+            if len(name_parts) == 1:
+                self._db = None
+                self._table_name = name_parts[0]
+            elif len(name_parts) == 2:
+                self._db = name_parts[0]
+                self._table_name = name_parts[1]
+            else:
+                raise DeltaHandleInvalidName(f"Could not parse name {self._name}")
+
+        # only format delta is supported.
+        if self._data_format != "delta":
+            raise DeltaHandleInvalidFormat("Only format delta is supported.")
 
     def create_hive_table(self) -> None:
         sql = f"CREATE TABLE IF NOT EXISTS {self._name} "
