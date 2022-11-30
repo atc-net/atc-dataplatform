@@ -114,14 +114,12 @@ class DeltaStreamHandle(SparkHandle):
     def truncate(self) -> None:
         Spark.get().sql(f"TRUNCATE TABLE {self._name};")
 
-        if file_exists(self._checkpoint_path):
-            init_dbutils().fs.rm(self._checkpoint_path, True)
+        self.remove_checkpoint()
 
     def drop(self) -> None:
         Spark.get().sql(f"DROP TABLE IF EXISTS {self._name};")
 
-        if file_exists(self._checkpoint_path):
-            init_dbutils().fs.rm(self._checkpoint_path, True)
+        self.remove_checkpoint()
 
     def drop_and_delete(self) -> None:
         self.drop()
@@ -186,13 +184,16 @@ class DeltaStreamHandle(SparkHandle):
             raise ValueError("Unknown trigger type.")
 
     def create_hive_table(self) -> None:
-        if not file_exists(self._checkpoint_path):
-            init_dbutils().fs.mkdirs(self._checkpoint_path)
+        self.remove_checkpoint()
 
         sql = f"CREATE TABLE IF NOT EXISTS {self._name} "
         if self._location:
             sql += f" USING DELTA LOCATION '{self._location}'"
         Spark.get().sql(sql)
+
+    def remove_checkpoint(self):
+        if not file_exists(self._checkpoint_path):
+            init_dbutils().fs.mkdirs(self._checkpoint_path)
 
 
 class UpsertHelper:

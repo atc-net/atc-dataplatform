@@ -70,7 +70,7 @@ class AutoloaderTests(unittest.TestCase):
             "AvroSink",
             {
                 "name": "{MyDb}.AvroSink",
-                "path": "{MyDb_path}/AvroSink",
+                # "path": "{MyDb_path}/AvroSink",
                 "format": "delta",
                 "checkpoint_path": sink_checkpoint_path,
             },
