@@ -82,19 +82,20 @@ class AutoloaderTests(unittest.TestCase):
         DeltaStreamHandle.from_tc("AvroSink")
 
     def test_01_read_avro(self):
-
-        self._add_avro_data_to_source([(1, "a"), (2, "b")])
+        DbHandle.from_tc("MyDb").create()
 
         dsh_sink = DeltaStreamHandle.from_tc("AvroSink")
         Spark.get().sql(
             f"""
-                    CREATE TABLE {dsh_sink.get_tablename()}
-                    (
-                    id int,
-                    name string
-                    )
-                """
+                            CREATE TABLE {dsh_sink.get_tablename()}
+                            (
+                            id int,
+                            name string
+                            )
+                        """
         )
+
+        self._add_avro_data_to_source([(1, "a"), (2, "b")])
 
         o = Orchestrator()
         o.extract_from(

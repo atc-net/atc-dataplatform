@@ -33,6 +33,7 @@ class AutoloaderStreamHandle(TableHandle):
         self._checkpoint_path = checkpoint_path
 
         self._validate()
+        self._validate_checkpoint()
 
     @classmethod
     def from_tc(cls, id: str) -> "AutoloaderStreamHandle":
@@ -47,6 +48,14 @@ class AutoloaderStreamHandle(TableHandle):
         """Validates that the name is either db.table or just table."""
         if self._data_format == "delta":
             raise DeltaHandleInvalidFormat("Use DeltaStreamHandle for delta.")
+
+    def _validate_checkpoint(self):
+        if "/_" not in self._location:
+            print(
+                "RECOMMENDATION: You can safely store checkpoints alongside "
+                "other data and metadata for a Delta table using a directory "
+                "structure such as <table_name>/_checkpoints"
+            )
 
     def read(self) -> DataFrame:
 

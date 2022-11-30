@@ -44,6 +44,7 @@ class DeltaStreamHandle(SparkHandle):
         self._trigger_time = trigger_time.lower() if trigger_time else None
         self._validate()
         self._validate_trigger_type()
+        self._validate_checkpoint()
 
     @classmethod
     def from_tc(cls, id: str) -> "DeltaStreamHandle":
@@ -65,6 +66,14 @@ class DeltaStreamHandle(SparkHandle):
         assert (self._trigger_type == "processingtime") is (
             self._trigger_time is not None
         )
+
+    def _validate_checkpoint(self):
+        if "/_" not in self._location:
+            print(
+                "RECOMMENDATION: You can safely store checkpoints alongside "
+                "other data and metadata for a Delta table using a directory "
+                "structure such as <table_name>/_checkpoints"
+            )
 
     def read(self) -> DataFrame:
 
