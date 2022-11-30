@@ -1,15 +1,9 @@
-from typing import List
-
 from pyspark.sql import DataFrame
-from pyspark.sql.streaming import DataStreamWriter
 
 from atc.configurator.configurator import Configurator
-from atc.functions import init_dbutils
 from atc.spark import Spark
 from atc.tables import TableHandle
-from atc.tables.SparkHandle import DeltaHandleInvalidFormat, SparkHandle
-from atc.utils import GetMergeStatement
-from atc.utils.FileExists import file_exists
+from atc.tables.SparkHandle import DeltaHandleInvalidFormat
 
 
 class AutoloaderStreamHandle(TableHandle):
@@ -19,7 +13,6 @@ class AutoloaderStreamHandle(TableHandle):
         location: str,
         checkpoint_path: str,
         data_format: str,
-        # trigger_type ?
     ):
         """
         location: the location of the delta table
@@ -53,7 +46,7 @@ class AutoloaderStreamHandle(TableHandle):
     def _validate(self):
         """Validates that the name is either db.table or just table."""
         if self._data_format == "delta":
-            raise DeltaHandleInvalidFormat("Use delta stream handle for delta.")
+            raise DeltaHandleInvalidFormat("Use DeltaStreamHandle for delta.")
 
     def read(self) -> DataFrame:
 

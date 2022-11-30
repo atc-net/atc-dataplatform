@@ -3,8 +3,7 @@ from typing import List, Tuple
 from atc_tools.testing import DataframeTestCase
 
 from atc import Configurator
-from atc.delta import DbHandle, DeltaHandle
-from atc.delta.autoloaderstream_handle import AutoloaderStreamHandle
+from atc.delta import DbHandle, DeltaHandle, DeltaStreamHandle
 from atc.etl.loaders.UpsertLoader import UpsertLoader
 from atc.functions import init_dbutils
 from atc.spark import Spark
@@ -15,7 +14,7 @@ from tests.cluster.delta import extras
 from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
 
 
-class UpsertLoaderTestsAutoloaderStream(DataframeTestCase):
+class UpsertLoaderTestsDeltaStream(DataframeTestCase):
 
     source_table_checkpoint_path = None
     join_cols = ["col1", "col2"]
@@ -36,7 +35,7 @@ class UpsertLoaderTestsAutoloaderStream(DataframeTestCase):
 
     dummy_schema = None
     target_dh_dummy: DeltaHandle = None
-    target_ah_dummy: AutoloaderStreamHandle = None
+    target_ah_dummy: DeltaStreamHandle = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -68,10 +67,10 @@ class UpsertLoaderTestsAutoloaderStream(DataframeTestCase):
             init_dbutils().fs.mkdirs(source_table_checkpoint_path)
 
         # Autoloader pointing at source table
-        cls.source_ah = AutoloaderStreamHandle.from_tc(cls.source_table_id)
+        cls.source_ah = DeltaStreamHandle.from_tc(cls.source_table_id)
 
         # Autoloader/Deltahandle pointing at target table
-        cls.target_ah_dummy = AutoloaderStreamHandle.from_tc("UpsertLoaderDummy")
+        cls.target_ah_dummy = DeltaStreamHandle.from_tc("UpsertLoaderDummy")
         cls.target_dh_dummy = DeltaHandle.from_tc("UpsertLoaderDummy")
 
         # Create target table

@@ -19,7 +19,8 @@ class DeltaStreamHandle(SparkHandle):
         name: str = None,
         data_format: str = None,
         location: str = None,
-        # trigger_type ?
+        trigger_type: str = "availablenow",
+        trigger_time: str = None,
     ):
         """
         name: name of the delta table
@@ -39,7 +40,10 @@ class DeltaStreamHandle(SparkHandle):
         super().__init__(name, location, data_format)
 
         self._checkpoint_path = checkpoint_path
+        self._trigger_type = trigger_type.lower() if trigger_type else None
+        self._trigger_time = trigger_time.lower() if trigger_time else None
         self._validate()
+        self._validate_trigger_type()
 
     @classmethod
     def from_tc(cls, id: str) -> "DeltaStreamHandle":
@@ -49,6 +53,17 @@ class DeltaStreamHandle(SparkHandle):
             location=tc.table_property(id, "path", ""),
             data_format=tc.table_property(id, "format", None),
             checkpoint_path=tc.table_property(id, "checkpoint_path", None),
+        )
+
+    def _validate_trigger_type(self):
+        valid_trigger_types = {"availablenow", "once", "processingtime", "continuous"}
+        assert (
+            self._trigger_type in valid_trigger_types
+        ), f"Triggertype should either be {valid_trigger_types}"
+
+        # if trigger type is processingtime, then it should have a trigger time
+        assert (self._trigger_type == "processingtime") is (
+            self._trigger_time is not None
         )
 
     def read(self) -> DataFrame:
@@ -73,13 +88,11 @@ class DeltaStreamHandle(SparkHandle):
             print("WARNING: The term overwrite is called complete in streaming.")
             mode = "complete"
 
-        writer = (
-            df.writeStream.option("checkpointLocation", self._checkpoint_path)
-            .outputMode(mode)
-            .trigger(availableNow=True)
-        )
+        writer = df.writeStream.option(
+            "checkpointLocation", self._checkpoint_path
+        ).outputMode(mode)
 
-        # TODO: Support more trigger types
+        writer = self._add_trigger_type(writer)
 
         self._add_write_options(writer, mergeSchema)
 
@@ -129,10 +142,11 @@ class DeltaStreamHandle(SparkHandle):
             .foreachBatch(streamingmerge.upsert_to_delta)
             .outputMode("update")
             .option("checkpointLocation", self._checkpoint_path)
-            .trigger(availableNow=True)
-            .start()
         )
-        writer.awaitTermination()
+
+        writer = self._add_trigger_type(writer)
+
+        writer.start()
 
     def _add_write_options(self, writer: DataStreamWriter, mergeSchema: bool):
 
@@ -148,6 +162,19 @@ class DeltaStreamHandle(SparkHandle):
             writer = writer.toTable(self._name)
 
         return writer
+
+    def _add_trigger_type(self, writer: DataStreamWriter):
+
+        if self._trigger_type == "availablenow":
+            return writer.trigger(availableNow=True)
+        elif self._trigger_type == "once":
+            return writer.trigger(once=True)
+        elif self._trigger_type == "processingtime":
+            return writer.trigger(processingTime=self._trigger_time)
+        elif self._trigger_type == "continuous":
+            return writer.trigger(continuous=self._trigger_time)
+        else:
+            raise ValueError("Unknown trigger type.")
 
     def create_hive_table(self) -> None:
         if not file_exists(self._checkpoint_path):

@@ -2,11 +2,8 @@ import unittest
 import uuid as _uuid
 from typing import List, Tuple
 
-from pyspark.sql.utils import AnalysisException
-
 from atc import Configurator
-from atc.delta import DbHandle, DeltaHandle
-from atc.delta.autoloaderstream_handle import AutoloaderStreamHandle
+from atc.delta import AutoloaderStreamHandle, DbHandle, DeltaHandle, DeltaStreamHandle
 from atc.etl import Orchestrator
 from atc.etl.extractors import SimpleExtractor
 from atc.etl.loaders import SimpleLoader
@@ -53,61 +50,7 @@ class AutoloaderTests(unittest.TestCase):
         tc.register(
             "MyDb", {"name": "TestDb{ID}", "path": "/mnt/atc/silver/testdb{ID}"}
         )
-
-        tc.register(
-            "MyTbl",
-            {
-                "name": "TestDb{ID}.TestTbl",
-                "path": "/mnt/atc/silver/testdb{ID}/testtbl",
-                "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl",
-            },
-        )
-
-        mirror_cp_path = "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tblmirror"
-        tc.register(
-            "MyTblMirror",
-            {
-                "name": "TestDb{ID}.TestTblMirror",
-                "path": "/mnt/atc/silver/testdb{ID}/testtblmirror",
-                "checkpoint_path": mirror_cp_path,
-            },
-        )
-
-        tc.register(
-            "MyTbl2",
-            {
-                "name": "TestDb{ID}.TestTbl2",
-                "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl2",
-            },
-        )
-
-        tc.register(
-            "MyTbl3",
-            {
-                "path": "/mnt/atc/silver/testdb{ID}/testtbl3",
-                "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl3",
-            },
-        )
-
-        tc.register(
-            "MyTbl4",
-            {
-                "name": "TestDb{ID}.TestTbl4",
-                "path": "/mnt/atc/silver/testdb{ID}/testtbl4",
-                "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl4",
-            },
-        )
-
-        tc.register(
-            "MyTbl5",
-            {
-                "name": "TestDb{ID}.TestTbl5",
-                "path": "/mnt/atc/silver/testdb{ID}/testtbl5",
-                "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl5",
-            },
-        )
-
-        # add eventhub
+        # add avro source
         tc.register(
             "AvroSource",
             {
@@ -119,14 +62,15 @@ class AutoloaderTests(unittest.TestCase):
             },
         )
 
+        # Add sink table
         sink_checkpoint_path = "/mnt/atc/silver/testdb{ID}/_checkpoint_path_avrosink"
         init_dbutils().fs.mkdirs(sink_checkpoint_path)
         # add eventhub sink
         tc.register(
             "AvroSink",
             {
-                "name": "TestDb{ID}.AvroSink",
-                "path": "/mnt/atc/silver/testdb{ID}/AvroSink",
+                "name": "{MyDb}.AvroSink",
+                "path": "{MyDb_path}/AvroSink",
                 "format": "delta",
                 "checkpoint_path": sink_checkpoint_path,
             },
@@ -134,86 +78,17 @@ class AutoloaderTests(unittest.TestCase):
 
         # test instantiation without error
         DbHandle.from_tc("MyDb")
-        AutoloaderStreamHandle.from_tc("MyTbl")
-        AutoloaderStreamHandle.from_tc("MyTblMirror")
-        AutoloaderStreamHandle.from_tc("MyTbl2")
-        AutoloaderStreamHandle.from_tc("MyTbl3")
-        AutoloaderStreamHandle.from_tc("MyTbl4")
-        AutoloaderStreamHandle.from_tc("MyTbl5")
         AutoloaderStreamHandle.from_tc("AvroSource")
         AutoloaderStreamHandle.from_tc("AvroSink")
 
-    def test_02_write_data_with_deltahandle(self):
-        self._overwrite_two_rows_to_table("MyTbl")
-
-    def test_03_create(self):
-        db = DbHandle.from_tc("MyDb")
-        db.create()
-
-        ah = AutoloaderStreamHandle.from_tc("MyTbl")
-        ah.create_hive_table()
-
-        # test hive access:
-        df = DeltaHandle.from_tc("MyTbl").read()
-        self.assertTrue(6, df.count())
-
-    def test_04_read(self):
-        df = AutoloaderStreamHandle.from_tc("MyTbl").read()
-        self.assertTrue(df.isStreaming)
-
-    def test_05_truncate(self):
-        ah = AutoloaderStreamHandle.from_tc("MyTbl")
-        ah.truncate()
-
-        result = DeltaHandle.from_tc("MyTbl").read()
-        self.assertEqual(0, result.count())
-
-    def test_06_etl(self):
-        self._overwrite_two_rows_to_table("MyTbl")
-        self._create_tbl_mirror()
-
-        o = Orchestrator()
-        o.extract_from(
-            SimpleExtractor(
-                AutoloaderStreamHandle.from_tc("MyTbl"), dataset_key="MyTbl"
-            )
-        )
-        o.load_into(
-            SimpleLoader(AutoloaderStreamHandle.from_tc("MyTblMirror"), mode="append")
-        )
-        o.execute()
-
-        result = DeltaHandle.from_tc("MyTblMirror").read()
-        self.assertEqual(2, result.count())
-
-    def test_07_write_path_only(self):
-        self._overwrite_two_rows_to_table("MyTbl")
-        # check that we can write to the table with no "name" property
-        ah = AutoloaderStreamHandle.from_tc("MyTbl").read()
-
-        ah3 = AutoloaderStreamHandle.from_tc("MyTbl3")
-
-        ah3.append(ah, mergeSchema=True)
-
-        # Read data from mytbl3
-        result = DeltaHandle.from_tc("MyTbl3").read()
-        self.assertEqual(2, result.count())
-
-    def test_08_delete(self):
-        dh = AutoloaderStreamHandle.from_tc("MyTbl")
-        dh.drop_and_delete()
-
-        with self.assertRaises(AnalysisException):
-            dh.read()
-
-    def test_09_read_avro(self):
+    def test_01_read_avro(self):
 
         self._add_avro_data_to_source([(1, "a"), (2, "b")])
 
-        ah_sink = AutoloaderStreamHandle.from_tc("AvroSink")
+        dsh_sink = DeltaStreamHandle.from_tc("AvroSink")
         Spark.get().sql(
             f"""
-                    CREATE TABLE {ah_sink.get_tablename()}
+                    CREATE TABLE {dsh_sink.get_tablename()}
                     (
                     id int,
                     name string
@@ -227,7 +102,7 @@ class AutoloaderTests(unittest.TestCase):
                 AutoloaderStreamHandle.from_tc("AvroSource"), dataset_key="AvroSource"
             )
         )
-        o.load_into(SimpleLoader(ah_sink, mode="append"))
+        o.load_into(SimpleLoader(dsh_sink, mode="append"))
         o.execute()
 
         result = DeltaHandle.from_tc("AvroSink").read()
@@ -244,42 +119,15 @@ class AutoloaderTests(unittest.TestCase):
         o.execute()
         self.assertTrue(4, result.count())
 
-    def test_10_partitioning(self):
-        dh = AutoloaderStreamHandle.from_tc("MyTbl4")
-        Spark.get().sql(
-            f"""
-            CREATE TABLE {dh.get_tablename()}
-            (
-            colA string,
-            colB int,
-            payload string
-            )
-            PARTITIONED BY (colB,colA)
-        """
-        )
+        # Add specific data to source
+        self._add_specific_data_to_source()
+        o.execute()
+        self.assertTrue(5, result.count())
 
-        self.assertEqual(dh.get_partitioning(), ["colB", "colA"])
-
-        dh2 = AutoloaderStreamHandle.from_tc("MyTbl5")
-        Spark.get().sql(
-            f"""
-            CREATE TABLE {dh2.get_tablename()}
-            (
-            colA string,
-            colB int,
-            payload string
-            )
-        """
-        )
-
-        self.assertEqual(dh2.get_partitioning(), [])
-
-    def _overwrite_two_rows_to_table(self, tblid: str):
-        dh = DeltaHandle.from_tc(tblid)
-
-        df = Spark.get().createDataFrame([(1, "a"), (2, "b")], "id int, name string")
-
-        dh.overwrite(df, mergeSchema=True)
+        # Test what happens if data is altered
+        self._alter_specific_data()
+        o.execute()
+        result.show()
 
     def _create_tbl_mirror(self):
         dh = DeltaHandle.from_tc("MyTblMirror")
@@ -297,3 +145,13 @@ class AutoloaderTests(unittest.TestCase):
         df = Spark.get().createDataFrame(input_data, "id int, name string")
 
         df.write.format("avro").save(self.avro_source_path + "/" + str(_uuid.uuid4()))
+
+    def _add_specific_data_to_source(self):
+        df = Spark.get().createDataFrame([(10, "specific")], "id int, name string")
+
+        df.write.format("avro").save(self.avro_source_path + "/specific")
+
+    def _alter_specific_data(self):
+        df = Spark.get().createDataFrame([(11, "specific")], "id int, name string")
+
+        df.write.format("avro").save(self.avro_source_path + "/specific")
