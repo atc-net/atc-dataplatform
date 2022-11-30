@@ -50,7 +50,7 @@ class AutoloaderStreamHandle(TableHandle):
             raise DeltaHandleInvalidFormat("Use DeltaStreamHandle for delta.")
 
     def _validate_checkpoint(self):
-        if "/_" not in self._location:
+        if "/_" not in self._checkpoint_path:
             print(
                 "RECOMMENDATION: You can safely store checkpoints alongside "
                 "other data and metadata for a Delta table using a directory "
