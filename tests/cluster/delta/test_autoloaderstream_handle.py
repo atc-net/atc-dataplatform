@@ -155,4 +155,6 @@ class AutoloaderTests(unittest.TestCase):
     def _alter_specific_data(self):
         df = Spark.get().createDataFrame([(11, "specific")], "id int, name string")
 
-        df.write.format("avro").save(self.avro_source_path + "/specific")
+        df.write.format("avro").mode("overwrite").save(
+            self.avro_source_path + "/specific"
+        )
