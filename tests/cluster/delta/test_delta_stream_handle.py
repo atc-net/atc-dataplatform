@@ -1,50 +1,25 @@
 import unittest
-import uuid as _uuid
-from typing import List, Tuple
 
 from pyspark.sql.utils import AnalysisException
 
 from atc import Configurator
-from atc.delta import AutoloaderStreamHandle, DbHandle, DeltaHandle, DeltaStreamHandle
+from atc.delta import DbHandle, DeltaHandle, DeltaStreamHandle
 from atc.etl import Orchestrator
 from atc.etl.extractors import SimpleExtractor
 from atc.etl.loaders import SimpleLoader
-from atc.functions import init_dbutils
 from atc.spark import Spark
-from atc.utils.FileExists import file_exists
 from atc.utils.stop_all_streams import stop_all_streams
-from tests.cluster.values import resourceName
 
 
-class AutoloaderTests(unittest.TestCase):
-    avrosource_checkpoint_path = (
-        f"/mnt/{resourceName()}/silver/{resourceName()}"
-        f"/avrolocation/_checkpoint_path_avro"
-    )
-
-    avro_source_path = (
-        f"/mnt/{resourceName()}/silver/{resourceName()}/avrolocation/AvroSource"
-    )
-
+class DeltaStreamHandleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         Configurator().clear_all_configurations()
         Configurator().set_debug()
 
-        if not file_exists(cls.avrosource_checkpoint_path):
-            init_dbutils().fs.mkdirs(cls.avrosource_checkpoint_path)
-
-        if not file_exists(cls.avro_source_path):
-            init_dbutils().fs.mkdirs(cls.avro_source_path)
-
     @classmethod
     def tearDownClass(cls) -> None:
         DbHandle.from_tc("MyDb").drop_cascade()
-        if file_exists(cls.avrosource_checkpoint_path):
-            init_dbutils().fs.rm(cls.avrosource_checkpoint_path, True)
-
-        if file_exists(cls.avro_source_path):
-            init_dbutils().fs.rm(cls.avro_source_path, True)
         stop_all_streams()
 
     def test_01_configure(self):
@@ -112,31 +87,6 @@ class AutoloaderTests(unittest.TestCase):
             },
         )
 
-        # add eventhub
-        tc.register(
-            "AvroSource",
-            {
-                "name": "AvroSource",
-                "path": self.avro_source_path,
-                "format": "avro",
-                "partitioning": "ymd",
-                "checkpoint_path": self.avrosource_checkpoint_path,
-            },
-        )
-
-        sink_checkpoint_path = "/mnt/atc/silver/testdb{ID}/_checkpoint_path_avrosink"
-        init_dbutils().fs.mkdirs(sink_checkpoint_path)
-        # add eventhub sink
-        tc.register(
-            "AvroSink",
-            {
-                "name": "TestDb{ID}.AvroSink",
-                "path": "/mnt/atc/silver/testdb{ID}/AvroSink",
-                "format": "delta",
-                "checkpoint_path": sink_checkpoint_path,
-            },
-        )
-
         # test instantiation without error
         DbHandle.from_tc("MyDb")
         DeltaStreamHandle.from_tc("MyTbl")
@@ -145,8 +95,6 @@ class AutoloaderTests(unittest.TestCase):
         DeltaStreamHandle.from_tc("MyTbl3")
         DeltaStreamHandle.from_tc("MyTbl4")
         DeltaStreamHandle.from_tc("MyTbl5")
-        DeltaStreamHandle.from_tc("AvroSource")
-        DeltaStreamHandle.from_tc("AvroSink")
 
     def test_02_write_data_with_deltahandle(self):
         self._overwrite_two_rows_to_table("MyTbl")
@@ -259,8 +207,3 @@ class AutoloaderTests(unittest.TestCase):
                             )
                         """
         )
-
-    def _add_avro_data_to_source(self, input_data: List[Tuple[int, str]]):
-        df = Spark.get().createDataFrame(input_data, "id int, name string")
-
-        df.write.format("avro").save(self.avro_source_path + "/" + str(_uuid.uuid4()))
