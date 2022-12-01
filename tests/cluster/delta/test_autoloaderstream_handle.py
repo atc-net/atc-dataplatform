@@ -108,22 +108,22 @@ class AutoloaderTests(unittest.TestCase):
 
         result = DeltaHandle.from_tc("AvroSink").read()
 
-        self.assertTrue(2, result.count())
+        self.assertEqual(2, result.count())
 
         # Run again. Should not append more.
         o.execute()
-        self.assertTrue(2, result.count())
+        self.assertEqual(2, result.count())
 
         self._add_avro_data_to_source([(3, "c"), (4, "d")])
 
         # Run again. Should append.
         o.execute()
-        self.assertTrue(4, result.count())
+        self.assertEqual(4, result.count())
 
         # Add specific data to source
         self._add_specific_data_to_source()
         o.execute()
-        self.assertTrue(5, result.count())
+        self.assertEqual(5, result.count())
 
         # Test what happens if data is altered
         self._alter_specific_data()

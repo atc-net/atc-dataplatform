@@ -108,7 +108,7 @@ class DeltaStreamHandleTests(unittest.TestCase):
 
         # test hive access:
         df = DeltaHandle.from_tc("MyTbl").read()
-        self.assertTrue(6, df.count())
+        self.assertEqual(2, df.count())
 
     def test_04_read(self):
         df = DeltaStreamHandle.from_tc("MyTbl").read()
