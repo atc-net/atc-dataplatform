@@ -59,6 +59,7 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
             {
                 "name": "TestUpsertAutoDb{ID}." + cls.source_table_id,
                 "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/" + cls.source_table_id,
+                "format": "delta",
                 "checkpoint_path": source_table_checkpoint_path,
             },
         )
