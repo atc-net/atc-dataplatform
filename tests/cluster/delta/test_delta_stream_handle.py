@@ -58,6 +58,7 @@ class AutoloaderTests(unittest.TestCase):
             {
                 "name": "TestDb{ID}.TestTbl",
                 "path": "/mnt/atc/silver/testdb{ID}/testtbl",
+                "format": "delta",
                 "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl",
             },
         )
@@ -68,6 +69,7 @@ class AutoloaderTests(unittest.TestCase):
             {
                 "name": "TestDb{ID}.TestTblMirror",
                 "path": "/mnt/atc/silver/testdb{ID}/testtblmirror",
+                "format": "delta",
                 "checkpoint_path": mirror_cp_path,
             },
         )
@@ -76,6 +78,7 @@ class AutoloaderTests(unittest.TestCase):
             "MyTbl2",
             {
                 "name": "TestDb{ID}.TestTbl2",
+                "format": "delta",
                 "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl2",
             },
         )
@@ -84,6 +87,7 @@ class AutoloaderTests(unittest.TestCase):
             "MyTbl3",
             {
                 "path": "/mnt/atc/silver/testdb{ID}/testtbl3",
+                "format": "delta",
                 "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl3",
             },
         )
@@ -93,6 +97,7 @@ class AutoloaderTests(unittest.TestCase):
             {
                 "name": "TestDb{ID}.TestTbl4",
                 "path": "/mnt/atc/silver/testdb{ID}/testtbl4",
+                "format": "delta",
                 "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl4",
             },
         )
@@ -102,6 +107,7 @@ class AutoloaderTests(unittest.TestCase):
             {
                 "name": "TestDb{ID}.TestTbl5",
                 "path": "/mnt/atc/silver/testdb{ID}/testtbl5",
+                "format": "delta",
                 "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl5",
             },
         )
