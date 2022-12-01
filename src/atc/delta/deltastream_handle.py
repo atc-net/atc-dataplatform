@@ -103,7 +103,9 @@ class DeltaStreamHandle(SparkHandle):
 
         writer = self._add_trigger_type(writer)
 
-        self._add_write_options(writer, mergeSchema)
+        writer = self._add_write_options(writer, mergeSchema)
+
+        writer.awaitTermination()  # Consider removing awaitTermination
 
     def overwrite(self, df: DataFrame, mergeSchema: bool = None) -> None:
         return self.write_or_append(df, "complete", mergeSchema)
@@ -153,7 +155,7 @@ class DeltaStreamHandle(SparkHandle):
 
         writer = self._add_trigger_type(writer)
 
-        writer.start()
+        writer.start().awaitTermination()  # Consider removing awaitTermination
 
     def _add_write_options(self, writer: DataStreamWriter, mergeSchema: bool):
 
