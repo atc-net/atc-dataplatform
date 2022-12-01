@@ -90,12 +90,13 @@ class AutoloaderTests(unittest.TestCase):
                             CREATE TABLE {dsh_sink.get_tablename()}
                             (
                             id int,
-                            name string
+                            name string,
+                            _rescued_data string
                             )
                         """
         )
 
-        self._add_avro_data_to_source([(1, "a"), (2, "b")])
+        self._add_avro_data_to_source([(1, "a", "None"), (2, "b", "None")])
 
         o = Orchestrator()
         o.extract_from(
@@ -103,6 +104,7 @@ class AutoloaderTests(unittest.TestCase):
                 AutoloaderStreamHandle.from_tc("AvroSource"), dataset_key="AvroSource"
             )
         )
+
         o.load_into(SimpleLoader(dsh_sink, mode="append"))
         o.execute()
 
@@ -114,7 +116,7 @@ class AutoloaderTests(unittest.TestCase):
         o.execute()
         self.assertEqual(2, result.count())
 
-        self._add_avro_data_to_source([(3, "c"), (4, "d")])
+        self._add_avro_data_to_source([(3, "c", "None"), (4, "d", "None")])
 
         # Run again. Should append.
         o.execute()
@@ -137,23 +139,30 @@ class AutoloaderTests(unittest.TestCase):
                             CREATE TABLE {dh.get_tablename()}
                             (
                             id int,
-                            name string
+                            name string,
+                            _rescued_data string
                             )
                         """
         )
 
-    def _add_avro_data_to_source(self, input_data: List[Tuple[int, str]]):
-        df = Spark.get().createDataFrame(input_data, "id int, name string")
+    def _add_avro_data_to_source(self, input_data: List[Tuple[int, str, str]]):
+        df = Spark.get().createDataFrame(
+            input_data, "id int, name string, _rescued_data string"
+        )
 
         df.write.format("avro").save(self.avro_source_path + "/" + str(_uuid.uuid4()))
 
     def _add_specific_data_to_source(self):
-        df = Spark.get().createDataFrame([(10, "specific")], "id int, name string")
+        df = Spark.get().createDataFrame(
+            [(10, "specific", "None")], "id int, name string, _rescued_data string"
+        )
 
         df.write.format("avro").save(self.avro_source_path + "/specific")
 
     def _alter_specific_data(self):
-        df = Spark.get().createDataFrame([(11, "specific")], "id int, name string")
+        df = Spark.get().createDataFrame(
+            [(11, "specific", "None")], "id int, name string, _rescued_data string"
+        )
 
         df.write.format("avro").mode("overwrite").save(
             self.avro_source_path + "/specific"
