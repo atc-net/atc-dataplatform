@@ -163,7 +163,7 @@ class DeltaStreamHandleTests(unittest.TestCase):
         dsh = DeltaStreamHandle.from_tc("MyTbl4")
         Spark.get().sql(
             f"""
-            CREATE TABLE {dsh.get_tablename()}
+            CREATE TABLE IF NOT EXISTS {dsh.get_tablename()}
             (
             colA string,
             colB int,
@@ -178,7 +178,7 @@ class DeltaStreamHandleTests(unittest.TestCase):
         dsh2 = DeltaStreamHandle.from_tc("MyTbl5")
         Spark.get().sql(
             f"""
-            CREATE TABLE {dsh2.get_tablename()}
+            CREATE TABLE IF NOT EXISTS {dsh2.get_tablename()}
             (
             colA string,
             colB int,

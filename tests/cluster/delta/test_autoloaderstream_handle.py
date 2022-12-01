@@ -127,10 +127,11 @@ class AutoloaderTests(unittest.TestCase):
         o.execute()
         self.assertEqual(5, result.count())
 
-        # Test what happens if data is altered
+        # If the same file is altered
+        # the new row is appended also
         self._alter_specific_data()
         o.execute()
-        result.show()
+        self.assertEqual(6, result.count())
 
     def _create_tbl_mirror(self):
         dh = DeltaHandle.from_tc("MyTblMirror")
