@@ -139,14 +139,14 @@ class AutoloaderTests(unittest.TestCase):
 
         # test instantiation without error
         DbHandle.from_tc("MyDb")
-        AutoloaderStreamHandle.from_tc("MyTbl")
-        AutoloaderStreamHandle.from_tc("MyTblMirror")
-        AutoloaderStreamHandle.from_tc("MyTbl2")
-        AutoloaderStreamHandle.from_tc("MyTbl3")
-        AutoloaderStreamHandle.from_tc("MyTbl4")
-        AutoloaderStreamHandle.from_tc("MyTbl5")
-        AutoloaderStreamHandle.from_tc("AvroSource")
-        AutoloaderStreamHandle.from_tc("AvroSink")
+        DeltaStreamHandle.from_tc("MyTbl")
+        DeltaStreamHandle.from_tc("MyTblMirror")
+        DeltaStreamHandle.from_tc("MyTbl2")
+        DeltaStreamHandle.from_tc("MyTbl3")
+        DeltaStreamHandle.from_tc("MyTbl4")
+        DeltaStreamHandle.from_tc("MyTbl5")
+        DeltaStreamHandle.from_tc("AvroSource")
+        DeltaStreamHandle.from_tc("AvroSink")
 
     def test_02_write_data_with_deltahandle(self):
         self._overwrite_two_rows_to_table("MyTbl")
@@ -163,7 +163,7 @@ class AutoloaderTests(unittest.TestCase):
         self.assertTrue(6, df.count())
 
     def test_04_read(self):
-        df = AutoloaderStreamHandle.from_tc("MyTbl").read()
+        df = DeltaStreamHandle.from_tc("MyTbl").read()
         self.assertTrue(df.isStreaming)
 
     def test_05_truncate(self):
@@ -192,7 +192,7 @@ class AutoloaderTests(unittest.TestCase):
     def test_07_write_path_only(self):
         self._overwrite_two_rows_to_table("MyTbl")
         # check that we can write to the table with no "name" property
-        ah = AutoloaderStreamHandle.from_tc("MyTbl").read()
+        ah = DeltaStreamHandle.from_tc("MyTbl").read()
 
         dsh3 = DeltaStreamHandle.from_tc("MyTbl3")
 
@@ -211,45 +211,7 @@ class AutoloaderTests(unittest.TestCase):
         with self.assertRaises(AnalysisException):
             ah.read()
 
-    def test_09_read_avro(self):
-
-        self._add_avro_data_to_source([(1, "a"), (2, "b")])
-
-        dsh_sink = DeltaStreamHandle.from_tc("AvroSink")
-        Spark.get().sql(
-            f"""
-                    CREATE TABLE {dsh_sink.get_tablename()}
-                    (
-                    id int,
-                    name string
-                    )
-                """
-        )
-
-        o = Orchestrator()
-        o.extract_from(
-            SimpleExtractor(
-                AutoloaderStreamHandle.from_tc("AvroSource"), dataset_key="AvroSource"
-            )
-        )
-        o.load_into(SimpleLoader(dsh_sink, mode="append"))
-        o.execute()
-
-        result = DeltaHandle.from_tc("AvroSink").read()
-
-        self.assertTrue(2, result.count())
-
-        # Run again. Should not append more.
-        o.execute()
-        self.assertTrue(2, result.count())
-
-        self._add_avro_data_to_source([(3, "c"), (4, "d")])
-
-        # Run again. Should append.
-        o.execute()
-        self.assertTrue(4, result.count())
-
-    def test_10_partitioning(self):
+    def test_09_partitioning(self):
         dsh = DeltaStreamHandle.from_tc("MyTbl4")
         Spark.get().sql(
             f"""
