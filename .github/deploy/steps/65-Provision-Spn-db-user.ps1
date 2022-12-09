@@ -10,7 +10,8 @@ Graph-CreateRole -principalId $spId -roleDefinitionId 88d8e3e3-8f55-4a1e-953a-9b
 Ignore-Errors  # The role may already be there if we re-deploy
 
 Write-Host "Waiting for role to settle...." -ForegroundColor DarkYellow
-Start-Sleep -seconds 60 # If the Directory Reader is not there, increase te seconds here.
+#Start-Sleep -seconds 60 # If the Directory Reader is not there, increase te seconds here.
+#skip this and let's see where it fails
 
 $dbUserName = $mountSpn.name
 $ReadRights = $true
