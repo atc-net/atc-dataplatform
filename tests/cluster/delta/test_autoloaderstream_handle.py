@@ -73,6 +73,7 @@ class AutoloaderTests(unittest.TestCase):
                 # "path": "{MyDb_path}/AvroSink",
                 "format": "delta",
                 "checkpoint_path": sink_checkpoint_path,
+                "await_termination": True,
             },
         )
 

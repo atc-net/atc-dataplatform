@@ -46,6 +46,7 @@ class DeltaStreamHandleTests(unittest.TestCase):
                 "path": "/mnt/atc/silver/testdb{ID}/testtblmirror",
                 "format": "delta",
                 "checkpoint_path": mirror_cp_path,
+                "await_termination": True,
             },
         )
 
@@ -64,6 +65,7 @@ class DeltaStreamHandleTests(unittest.TestCase):
                 "path": "/mnt/atc/silver/testdb{ID}/testtbl3",
                 "format": "delta",
                 "checkpoint_path": "/mnt/atc/silver/testdb{ID}/_checkpoint_path_tbl3",
+                "await_termination": True,
             },
         )
 

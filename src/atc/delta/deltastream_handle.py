@@ -21,6 +21,7 @@ class DeltaStreamHandle(SparkHandle):
         location: str = None,
         trigger_type: str = "availablenow",
         trigger_time: str = None,
+        await_termination=False,
     ):
         """
         name: name of the delta table
@@ -36,12 +37,21 @@ class DeltaStreamHandle(SparkHandle):
 
         data_format: the data format of the files that are read (Default delta)
 
+        trigger_type: the trigger type of the stream.
+            See: https://docs.databricks.com/structured-streaming/triggers.html
+
+        trigger_time: if the trigger has is "processingtime",
+            it should have a trigger time associated
+
+        awaitTermination: if true, the ETL will wait for the termination of THIS query.
+
         """
         super().__init__(name, location, data_format)
 
         self._checkpoint_path = checkpoint_path
         self._trigger_type = trigger_type.lower() if trigger_type else None
         self._trigger_time = trigger_time.lower() if trigger_time else None
+        self._awaitTermination = await_termination
         self._validate()
         self._validate_trigger_type()
         self._validate_checkpoint()
@@ -54,6 +64,9 @@ class DeltaStreamHandle(SparkHandle):
             location=tc.table_property(id, "path", ""),
             data_format=tc.table_property(id, "format", None),
             checkpoint_path=tc.table_property(id, "checkpoint_path", None),
+            trigger_type=tc.table_property(id, "trigger_type", ""),
+            trigger_time=tc.table_property(id, "trigger_time", ""),
+            await_termination=tc.table_property(id, "await_termination", ""),
         )
 
     def _validate_trigger_type(self):
@@ -105,7 +118,8 @@ class DeltaStreamHandle(SparkHandle):
 
         writer = self._add_write_options(writer, mergeSchema)
 
-        writer.awaitTermination()  # Consider removing awaitTermination
+        if self._awaitTermination:
+            writer.awaitTermination()
 
     def overwrite(self, df: DataFrame, mergeSchema: bool = None) -> None:
         return self.write_or_append(df, "complete", mergeSchema)
@@ -155,7 +169,10 @@ class DeltaStreamHandle(SparkHandle):
 
         writer = self._add_trigger_type(writer)
 
-        writer.start().awaitTermination()  # Consider removing awaitTermination
+        if self._awaitTermination:
+            writer.start().awaitTermination()  # Consider removing awaitTermination
+        else:
+            writer.start()
 
     def _add_write_options(self, writer: DataStreamWriter, mergeSchema: bool):
 
