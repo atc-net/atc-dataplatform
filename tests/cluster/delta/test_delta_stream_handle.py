@@ -11,6 +11,10 @@ from atc.spark import Spark
 from atc.utils.stop_all_streams import stop_all_streams
 
 
+@unittest.skipUnless(
+    Spark.version() >= Spark.DATABRICKS_RUNTIME_10_4,
+    f"DeltaStreamHandle not available for Spark version {Spark.version()}",
+)
 class DeltaStreamHandleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:

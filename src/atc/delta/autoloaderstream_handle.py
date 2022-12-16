@@ -7,6 +7,10 @@ from atc.tables.SparkHandle import DeltaHandleInvalidFormat
 
 
 class AutoloaderStreamHandle(TableHandle):
+    assert (
+        Spark.version() >= Spark.DATABRICKS_RUNTIME_10_4
+    ), f"AutoloaderStreamHandle not available for Spark version {Spark.version()}"
+
     def __init__(
         self,
         *,

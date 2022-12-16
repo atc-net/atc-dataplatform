@@ -12,6 +12,10 @@ from atc.utils.FileExists import file_exists
 
 
 class DeltaStreamHandle(SparkHandle):
+    assert (
+        Spark.version() >= Spark.DATABRICKS_RUNTIME_10_4
+    ), f"DeltaStreamHandle not available for Spark version {Spark.version()}"
+
     def __init__(
         self,
         *,

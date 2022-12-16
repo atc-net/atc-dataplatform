@@ -14,6 +14,10 @@ from atc.utils.stop_all_streams import stop_all_streams
 from tests.cluster.values import resourceName
 
 
+@unittest.skipUnless(
+    Spark.version() >= Spark.DATABRICKS_RUNTIME_10_4,
+    f"Autoloader not available for Spark version {Spark.version()}",
+)
 class AutoloaderTests(unittest.TestCase):
     avrosource_checkpoint_path = (
         f"/mnt/{resourceName()}/silver/{resourceName()}"

@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from atc.atc_exceptions import AtcException
+from atc.exceptions import AtcException
 from atc.spark import Spark
 from atc.tables import TableHandle
 

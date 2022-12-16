@@ -1,3 +1,4 @@
+import unittest
 from typing import List, Tuple
 
 from atc_tools.testing import DataframeTestCase
@@ -14,6 +15,10 @@ from tests.cluster.delta import extras
 from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
 
 
+@unittest.skipUnless(
+    Spark.version() >= Spark.DATABRICKS_RUNTIME_10_4,
+    f"UpsertLoader for streaming not available for Spark version {Spark.version()}",
+)
 class UpsertLoaderTestsDeltaStream(DataframeTestCase):
 
     source_table_checkpoint_path = None
