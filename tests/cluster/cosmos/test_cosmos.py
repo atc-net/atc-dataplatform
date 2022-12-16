@@ -19,7 +19,6 @@ class TestCosmos(atc.cosmos.CosmosDb):
         )
 
 
-@unittest.skip("TEST FAILS USING SPARK 10.4")
 class CosmosTests(unittest.TestCase):
     def test_01_tables(self):
         tc = Configurator()
