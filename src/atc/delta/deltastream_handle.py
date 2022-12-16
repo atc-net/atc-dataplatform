@@ -12,10 +12,6 @@ from atc.utils.FileExists import file_exists
 
 
 class DeltaStreamHandle(SparkHandle):
-    assert (
-        Spark.version() >= Spark.DATABRICKS_RUNTIME_10_4
-    ), f"DeltaStreamHandle not available for Spark version {Spark.version()}"
-
     def __init__(
         self,
         *,
@@ -50,6 +46,10 @@ class DeltaStreamHandle(SparkHandle):
         awaitTermination: if true, the ETL will wait for the termination of THIS query.
 
         """
+        assert (
+            Spark.version() >= Spark.DATABRICKS_RUNTIME_10_4
+        ), f"DeltaStreamHandle not available for Spark version {Spark.version()}"
+
         super().__init__(name, location, data_format)
 
         self._checkpoint_path = checkpoint_path

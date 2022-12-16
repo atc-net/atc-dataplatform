@@ -7,10 +7,6 @@ from atc.tables.SparkHandle import DeltaHandleInvalidFormat
 
 
 class AutoloaderStreamHandle(TableHandle):
-    assert (
-        Spark.version() >= Spark.DATABRICKS_RUNTIME_10_4
-    ), f"AutoloaderStreamHandle not available for Spark version {Spark.version()}"
-
     def __init__(
         self,
         *,
@@ -31,6 +27,10 @@ class AutoloaderStreamHandle(TableHandle):
         data_format: the data format of the files that are read
 
         """
+
+        assert (
+            Spark.version() >= Spark.DATABRICKS_RUNTIME_10_4
+        ), f"AutoloaderStreamHandle not available for Spark version {Spark.version()}"
 
         self._location = location
         self._data_format = data_format
