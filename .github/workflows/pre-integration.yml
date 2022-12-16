@@ -98,9 +98,9 @@ jobs:
         shell: pwsh
         run: Start-Sleep -s 120
 
-      - name: Fetch integration tests 10.4
+      - name: Fetch integration tests 9.1
         shell: pwsh
-        run: .github/submit/fetch_test_job.ps1 -testJobDetails job104.json
+        run: .github/submit/fetch_test_job.ps1 -testJobDetails job91.json
 
       - name: Fetch integration tests 10.4
         shell: pwsh
