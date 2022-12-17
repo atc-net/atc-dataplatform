@@ -53,9 +53,9 @@ class DeltaStreamHandle(SparkHandle):
         super().__init__(name, location, data_format)
 
         self._checkpoint_path = checkpoint_path
-        self._trigger_type = trigger_type.lower() if trigger_type else None
+        self._trigger_type = trigger_type.lower() if trigger_type else "availablenow"
         self._trigger_time = trigger_time.lower() if trigger_time else None
-        self._awaitTermination = await_termination
+        self._awaitTermination = await_termination if await_termination else True
         self._validate()
         self._validate_trigger_type()
         self._validate_checkpoint()
@@ -68,9 +68,9 @@ class DeltaStreamHandle(SparkHandle):
             location=tc.table_property(id, "path", ""),
             data_format=tc.table_property(id, "format", None),
             checkpoint_path=tc.table_property(id, "checkpoint_path", None),
-            trigger_type=tc.table_property(id, "trigger_type", ""),
-            trigger_time=tc.table_property(id, "trigger_time", ""),
-            await_termination=tc.table_property(id, "await_termination", ""),
+            trigger_type=tc.table_property(id, "trigger_type", None),
+            trigger_time=tc.table_property(id, "trigger_time", None),
+            await_termination=tc.table_property(id, "await_termination", None),
         )
 
     def _validate_trigger_type(self):
