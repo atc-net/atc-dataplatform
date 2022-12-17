@@ -68,9 +68,9 @@ class DeltaStreamHandle(SparkHandle):
             location=tc.table_property(id, "path", ""),
             data_format=tc.table_property(id, "format", None),
             checkpoint_path=tc.table_property(id, "checkpoint_path", None),
-            trigger_type=tc.table_property(id, "trigger_type", None),
-            trigger_time=tc.table_property(id, "trigger_time", None),
-            await_termination=tc.table_property(id, "await_termination", None),
+            trigger_type=tc.table_property(id, "trigger_type", ""),
+            trigger_time=tc.table_property(id, "trigger_time", ""),
+            await_termination=tc.table_property(id, "await_termination", ""),
         )
 
     def _validate_trigger_type(self):
