@@ -4,6 +4,7 @@ See https://github.com/atc-net/atc-dataplatform for details
 """
 
 from atc import etl, functions, spark, sql  # noqa: F401
+from atc.conf_naming import *  # noqa: F401
 from atc.configurator.configurator import Configurator  # noqa: F401
 
 from .version import __version__  # noqa: F401

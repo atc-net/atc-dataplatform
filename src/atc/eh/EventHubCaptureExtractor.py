@@ -7,6 +7,7 @@ import pyspark.sql.utils
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as f
 
+from atc import FORMAT, PARTITIONING, PATH
 from atc.configurator.configurator import Configurator
 from atc.spark import Spark
 
@@ -27,10 +28,10 @@ class EventHubCaptureExtractor:
     @classmethod
     def from_tc(cls, tbl_id: str):
         tc = Configurator()
-        assert tc.table_property(tbl_id, "format") == "avro"
+        assert tc.table_property(tbl_id, FORMAT) == "avro"
         return cls(
-            path=tc.table_property(tbl_id, "path"),
-            partitioning=tc.table_property(tbl_id, "partitioning"),
+            path=tc.table_property(tbl_id, PATH),
+            partitioning=tc.table_property(tbl_id, PARTITIONING),
         )
 
     def __init__(self, path: str, partitioning: str):

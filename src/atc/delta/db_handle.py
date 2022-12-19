@@ -1,3 +1,4 @@
+from atc import FORMAT, PATH
 from atc.configurator.configurator import Configurator
 from atc.exceptions import AtcException
 from atc.spark import Spark
@@ -28,8 +29,8 @@ class DbHandle:
         tc = Configurator()
         return cls(
             name=tc.table_name(id),
-            location=tc.table_property(id, "path", ""),
-            data_format=tc.table_property(id, "format", "db"),
+            location=tc.table_property(id, PATH, ""),
+            data_format=tc.table_property(id, FORMAT, "db"),
         )
 
     def _validate(self):

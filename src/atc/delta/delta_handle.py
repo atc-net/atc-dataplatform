@@ -2,6 +2,7 @@ from typing import List, Optional, Union
 
 from pyspark.sql import DataFrame
 
+from atc import FORMAT, NAME, PATH
 from atc.configurator.configurator import Configurator
 from atc.exceptions import AtcException
 from atc.functions import get_unique_tempview_name, init_dbutils
@@ -37,9 +38,9 @@ class DeltaHandle(TableHandle):
     def from_tc(cls, id: str) -> "DeltaHandle":
         tc = Configurator()
         return cls(
-            name=tc.table_property(id, "name", ""),
-            location=tc.table_property(id, "path", ""),
-            data_format=tc.table_property(id, "format", "delta"),
+            name=tc.table_property(id, NAME, ""),
+            location=tc.table_property(id, PATH, ""),
+            data_format=tc.table_property(id, FORMAT, "delta"),
         )
 
     def _validate(self):
