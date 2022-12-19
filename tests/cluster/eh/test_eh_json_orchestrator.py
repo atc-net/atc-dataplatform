@@ -10,7 +10,6 @@ from atc.orchestrators.ehjson2delta.EhJsonToDeltaExtractor import EhJsonToDeltaE
 from atc.spark import Spark
 
 
-@unittest.skip("Flaky test. Remember to activate this test again before merge.")
 class JsonEhOrchestratorUnitTests(unittest.TestCase):
     tc: Configurator
 
