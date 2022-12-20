@@ -9,7 +9,7 @@ from typing import Dict, Set, Union
 import yaml
 from deprecated import deprecated
 
-from atc import ALIAS, DEBUG, NAME, PATH, RELEASE
+from atc.conf_naming import ALIAS, DEBUG, NAME, PATH, RELEASE
 from atc.exceptions import NoSuchValueException
 
 # recursive type definition of the details object
