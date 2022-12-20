@@ -2,7 +2,7 @@ from typing import List, Optional, Union
 
 from pyspark.sql import DataFrame
 
-from atc import FORMAT, NAME, PATH
+from atc.conf_naming import FORMAT, NAME, PATH
 from atc.configurator.configurator import Configurator
 from atc.exceptions import AtcException
 from atc.functions import get_unique_tempview_name, init_dbutils

@@ -3,7 +3,7 @@ from typing import Dict
 
 import pyspark.sql.types as T
 
-from atc import SCHEMA
+from atc.conf_naming import SCHEMA
 from atc.configurator import Configurator
 from atc.exceptions import (
     FalseSchemaDefinitionException,
