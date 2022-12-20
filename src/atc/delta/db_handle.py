@@ -1,5 +1,5 @@
-from atc import FORMAT, PATH
 from atc.configurator.configurator import Configurator
+from atc.const import FORMAT, PATH
 from atc.exceptions import AtcException
 from atc.spark import Spark
 

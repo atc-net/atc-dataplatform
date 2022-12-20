@@ -9,8 +9,8 @@ from pyspark.sql import functions as f
 from pyspark.sql.utils import AnalysisException
 
 from atc import dbg
-from atc.conf_naming import FORMAT, NAME, PARTITIONING, PATH
 from atc.configurator.configurator import Configurator
+from atc.const import FORMAT, NAME, PARTITIONING, PATH
 from atc.eh.eh_exceptions import AtcEhInitException, AtcEhLogicException
 from atc.eh.PartitionSpec import PartitionSpec
 from atc.functions import init_dbutils

@@ -2,8 +2,8 @@ from typing import List, Optional, Union
 
 from pyspark.sql import DataFrame
 
-from atc.conf_naming import FORMAT, NAME, PATH
 from atc.configurator.configurator import Configurator
+from atc.const import FORMAT, NAME, PATH
 from atc.exceptions import AtcException
 from atc.functions import get_unique_tempview_name, init_dbutils
 from atc.spark import Spark

@@ -7,8 +7,8 @@ import pyspark.sql.utils
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as f
 
-from atc import FORMAT, PARTITIONING, PATH
 from atc.configurator.configurator import Configurator
+from atc.const import FORMAT, PARTITIONING, PATH
 from atc.spark import Spark
 
 utc = datetime.timezone.utc

@@ -3,8 +3,8 @@ from typing import Dict
 
 import pyspark.sql.types as T
 
-from atc.conf_naming import SCHEMA
 from atc.configurator import Configurator
+from atc.const import SCHEMA
 from atc.exceptions import (
     FalseSchemaDefinitionException,
     NoSuchSchemaException,
