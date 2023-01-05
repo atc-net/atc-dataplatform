@@ -9,7 +9,7 @@ from typing import Dict, Set, Union
 import yaml
 from deprecated import deprecated
 
-from atc.const import ALIAS, DEBUG, NAME, PATH, RELEASE
+from atc.const import TableProperty
 from atc.exceptions import NoSuchValueException
 
 # recursive type definition of the details object
@@ -67,8 +67,11 @@ class Configurator(metaclass=ConfiguratorSingleton):
     ############################################
 
     def _set_extras(self):
-        self.register("ID", {RELEASE: "", DEBUG: f"__{self._unique_id}"})
-        self.register("MNT", {RELEASE: "mnt", DEBUG: "tmp"})
+        self.register(
+            "ID",
+            {TableProperty.RELEASE: "", TableProperty.DEBUG: f"__{self._unique_id}"},
+        )
+        self.register("MNT", {TableProperty.RELEASE: "mnt", TableProperty.DEBUG: "tmp"})
 
     @deprecated(
         reason="use .get('ENV') to get literal values.",
@@ -120,16 +123,16 @@ class Configurator(metaclass=ConfiguratorSingleton):
                 return value
             else:
                 # value is a dict
-                if set(value.keys()) == {RELEASE, DEBUG}:
+                if set(value.keys()) == {TableProperty.RELEASE, TableProperty.DEBUG}:
                     # Situation like MyForked
                     if self._is_debug:
-                        value = value[DEBUG]
+                        value = value[TableProperty.DEBUG]
                     else:
-                        value = value[RELEASE]
+                        value = value[TableProperty.RELEASE]
                     continue
-                elif set(value.keys()) == {ALIAS}:  # allow alias of alias
+                elif set(value.keys()) == {TableProperty.ALIAS}:  # allow alias of alias
                     # Situation like MyAlias
-                    new_id = value[ALIAS]
+                    new_id = value[TableProperty.ALIAS]
                     if new_id in stack:
                         raise ValueError(f"Alias loop at key {new_id}")
                     stack.add(new_id)
@@ -179,7 +182,7 @@ class Configurator(metaclass=ConfiguratorSingleton):
         if property:
             composite_key += f"_{property}"
         _forbidden_keys.add(composite_key)
-        if property == NAME:
+        if property == TableProperty.NAME:
             _forbidden_keys.add(table_id)
         if any(key in _forbidden_keys for key in format_keys):
             raise ValueError(
@@ -215,7 +218,9 @@ class Configurator(metaclass=ConfiguratorSingleton):
 
             # otherwise bare key references are to 'name',
             # which _must_ exist in this case
-            replacements[key] = self._get_item_property(key, NAME, _forbidden_keys)
+            replacements[key] = self._get_item_property(
+                key, TableProperty.NAME, _forbidden_keys
+            )
 
         # we have run through the key names of all replacement keys in the string.
         # Any that we could not find were skipped silently above, but that means that
@@ -338,7 +343,7 @@ class Configurator(metaclass=ConfiguratorSingleton):
         :param table_id: Table id in the .json or .yaml files.
         :return: str: table name
         """
-        return self.table_property(table_id, NAME)
+        return self.table_property(table_id, TableProperty.NAME)
 
     @deprecated(
         reason='Use .get(table_id,"path") instead.',
@@ -349,7 +354,7 @@ class Configurator(metaclass=ConfiguratorSingleton):
         :param table_id: Table id in the .json or .yaml files.
         :return: str: table path
         """
-        return self.get(table_id, PATH)
+        return self.get(table_id, TableProperty.PATH)
 
     def get(self, table_id: str, property: str = "") -> str:
         return self._get_item_property(table_id, property)
@@ -379,7 +384,9 @@ class Configurator(metaclass=ConfiguratorSingleton):
                     pass
 
                 try:
-                    self.table_details[table_id] = self.get(table_id, NAME)
+                    self.table_details[table_id] = self.get(
+                        table_id, TableProperty.NAME
+                    )
                 except NoSuchValueException:
                     pass
 

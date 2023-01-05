@@ -10,7 +10,7 @@ from pyspark.sql.utils import AnalysisException
 
 from atc import dbg
 from atc.configurator.configurator import Configurator
-from atc.const import FORMAT, NAME, PARTITIONING, PATH
+from atc.const import TableProperty
 from atc.eh.eh_exceptions import AtcEhInitException, AtcEhLogicException
 from atc.eh.PartitionSpec import PartitionSpec
 from atc.functions import init_dbutils
@@ -39,10 +39,10 @@ class EventHubCapture:
     def from_tc(cls, id: str):
         tc = Configurator()
         return cls(
-            name=tc.table_property(id, NAME),
-            path=tc.table_property(id, PATH),
-            format=tc.table_property(id, FORMAT),
-            partitioning=tc.table_property(id, PARTITIONING),
+            name=tc.table_property(id, TableProperty.NAME),
+            path=tc.table_property(id, TableProperty.PATH),
+            format=tc.table_property(id, TableProperty.FORMAT),
+            partitioning=tc.table_property(id, TableProperty.PARTITIONING),
         )
 
     def __init__(

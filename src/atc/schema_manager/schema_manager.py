@@ -4,7 +4,7 @@ from typing import Dict
 import pyspark.sql.types as T
 
 from atc.configurator import Configurator
-from atc.const import SCHEMA
+from atc.const import TableProperty
 from atc.exceptions import (
     FalseSchemaDefinitionException,
     NoSuchSchemaException,
@@ -41,7 +41,9 @@ class SchemaManager(metaclass=Singleton):
 
         # Otherwise, check if the schema identifier is a table identifier
         try:
-            schema = Configurator().get(table_id=schema_identifier, property=SCHEMA)
+            schema = Configurator().get(
+                table_id=schema_identifier, property=TableProperty.SCHEMA
+            )
         except NoSuchValueException:
             raise NoSuchSchemaException(schema_identifier)
 

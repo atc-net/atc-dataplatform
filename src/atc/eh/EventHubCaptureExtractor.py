@@ -8,7 +8,7 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as f
 
 from atc.configurator.configurator import Configurator
-from atc.const import FORMAT, PARTITIONING, PATH
+from atc.const import TableProperty
 from atc.spark import Spark
 
 utc = datetime.timezone.utc
@@ -28,10 +28,10 @@ class EventHubCaptureExtractor:
     @classmethod
     def from_tc(cls, tbl_id: str):
         tc = Configurator()
-        assert tc.table_property(tbl_id, FORMAT) == "avro"
+        assert tc.table_property(tbl_id, TableProperty.FORMAT) == "avro"
         return cls(
-            path=tc.table_property(tbl_id, PATH),
-            partitioning=tc.table_property(tbl_id, PARTITIONING),
+            path=tc.table_property(tbl_id, TableProperty.PATH),
+            partitioning=tc.table_property(tbl_id, TableProperty.PARTITIONING),
         )
 
     def __init__(self, path: str, partitioning: str):

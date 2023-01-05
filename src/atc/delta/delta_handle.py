@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 from pyspark.sql import DataFrame
 
 from atc.configurator.configurator import Configurator
-from atc.const import FORMAT, NAME, PATH
+from atc.const import TableProperty
 from atc.exceptions import AtcException
 from atc.functions import get_unique_tempview_name, init_dbutils
 from atc.spark import Spark
@@ -38,9 +38,9 @@ class DeltaHandle(TableHandle):
     def from_tc(cls, id: str) -> "DeltaHandle":
         tc = Configurator()
         return cls(
-            name=tc.table_property(id, NAME, ""),
-            location=tc.table_property(id, PATH, ""),
-            data_format=tc.table_property(id, FORMAT, "delta"),
+            name=tc.table_property(id, TableProperty.NAME, ""),
+            location=tc.table_property(id, TableProperty.PATH, ""),
+            data_format=tc.table_property(id, TableProperty.FORMAT, "delta"),
         )
 
     def _validate(self):
