@@ -5,7 +5,7 @@ A common set of python libraries for DataBricks.
 
 This package can not be run or tested without access to pyspark.
 However, installing pyspark as part of our installer gave issues when
-other versions of pyspark were needed. Hence we took out the dependency
+other versions of pyspark were needed. Hence, we took out the dependency
 from our installer.
 
 ## Installation
