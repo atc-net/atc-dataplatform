@@ -16,6 +16,11 @@
 
 param (
   # to submit parallel runs, you must specify this parameter
+  [Parameter(Mandatory=$True)]
+  [ValidateNotNullOrEmpty()]
+  [string]
+  $storageAccountName,
+
   [Parameter(Mandatory=$false)]
   [ValidateNotNullOrEmpty()]
   [string]
@@ -31,6 +36,8 @@ param (
   [ValidateNotNullOrEmpty()]
   [string]
   $sparkLibs = "sparklibs91.json"
+
+
 
 
 )
@@ -82,18 +89,14 @@ Pop-Location
 # remote path of the log
 $logOut = "$testDir/results.log"
 
+
 # construct the run submission configuration
 $run = @{
   run_name = "Testing Run"
   # single node cluster is sufficient
   new_cluster= @{
     spark_version=$sparkVersion
-    spark_conf= @{
-      "spark.databricks.cluster.profile"= "singleNode"
-      "spark.master"= "local[*, 4]"
-      "spark.databricks.delta.preview.enabled"= $true
-      "spark.databricks.io.cache.enabled"= $true
-    }
+    spark_conf = Get-Content "$PSScriptRoot/sparkconf.json" | ConvertFrom-Json
     azure_attributes=${
                 "availability"= "ON_DEMAND_AZURE",
                 "first_on_demand": 1,
