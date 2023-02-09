@@ -11,12 +11,13 @@ def getValue(secret_name: str):
 def resourceName():
     return getValue("resourceName")
 
+
 def storageAccount():
     return resourceName()
+
 
 def directAccessContainer(containername: str):
     domainPart = containername + "@" + storageAccount()
 
     # Example: abfss://silver@atc.dfs.core.windows.net/
-    return "abfss://"+domainPart+".dfs.core.windows.net/"
-
+    return "abfss://" + domainPart + ".dfs.core.windows.net/"
