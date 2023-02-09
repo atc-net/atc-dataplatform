@@ -1,5 +1,5 @@
 import unittest
-
+from tests.cluster.values import directAccessContainer
 from pyspark.sql.utils import AnalysisException
 
 from atc import Configurator
@@ -19,14 +19,14 @@ class DeltaTests(unittest.TestCase):
     def test_01_configure(self):
         tc = Configurator()
         tc.register(
-            "MyDb", {"name": "TestDb{ID}", "path": "/mnt/atc/silver/testdb{ID}"}
+            "MyDb", {"name": "TestDb{ID}", "path": directAccessContainer("silver")+"testdb{ID}"}
         )
 
         tc.register(
             "MyTbl",
             {
                 "name": "TestDb{ID}.TestTbl",
-                "path": "/mnt/atc/silver/testdb{ID}/testtbl",
+                "path": directAccessContainer("silver")+"testdb{ID}/testtbl",
             },
         )
 
@@ -40,7 +40,7 @@ class DeltaTests(unittest.TestCase):
         tc.register(
             "MyTbl3",
             {
-                "path": "/mnt/atc/silver/testdb/testtbl3",
+                "path": directAccessContainer("silver")+"testdb/testtbl3",
             },
         )
 
