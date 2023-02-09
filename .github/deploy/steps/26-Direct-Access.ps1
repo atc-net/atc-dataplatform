@@ -1,8 +1,11 @@
+# THIS COULD BE REMOVED
+# IT IS CODED IN THE ATC/SRC/TEST/VALUES.py
+
 # Add a secret for each layer in the storageaccount
 foreach ($layer in $dataLakeContainers.Values) {
     
     # Example: atcsilver
-    $secretName = $dataLakeName + $layer
+    $secretName =  $layer
 
     # Example: silver@atc
     $domainPart = $($layer.ToLower()) + "@" + $dataLakeName
