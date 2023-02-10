@@ -16,11 +16,6 @@
 
 param (
   # to submit parallel runs, you must specify this parameter
-  [Parameter(Mandatory=$True)]
-  [ValidateNotNullOrEmpty()]
-  [string]
-  $storageAccountName,
-
   [Parameter(Mandatory=$false)]
   [ValidateNotNullOrEmpty()]
   [string]
