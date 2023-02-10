@@ -2,10 +2,20 @@ import argparse
 import json
 from types import SimpleNamespace
 
+import deprecation
+
+import atc
 from atc.exceptions import AtcException
 from atc.functions import init_dbutils
 
 
+@deprecation.deprecated(
+    deprecated_in="1.0.60",
+    removed_in="2.0.0",
+    current_version=atc.__version__,
+    details="use direct access instead. "
+    "See the atc-dataplatform unittests, for example.",
+)
 def main():
     parser = argparse.ArgumentParser(description="atc-dataplatform mountpoint setup.")
     parser.add_argument(
