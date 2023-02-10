@@ -1,28 +1,31 @@
 
-$srcDir = "$PSScriptRoot/../../.."
+# This is unused - since mounting is
+# no longer a recommended way to access storage accounts.
 
-Push-Location -Path $srcDir
+# $srcDir = "$PSScriptRoot/../../.."
 
-pip install dbx
+# Push-Location -Path $srcDir
 
-dbx configure
-#copy "$srcDir/.github/submit/sparklibs.json" "$srcDir/tests/cluster/mount/"
+# pip install dbx
 
-$mountsJson = (,@(
-  @{
-    storageAccountName=$resourceName
-    secretScope="secrets"
-    clientIdName="Databricks--ClientId"
-    clientSecretName="Databricks--ClientSecret"
-    tenantIdName="Databricks--TenantId"
-    containers = [array]$($dataLakeContainers | ForEach-Object{ $_.name })
-  }
-))
+# dbx configure
+# #copy "$srcDir/.github/submit/sparklibs.json" "$srcDir/tests/cluster/mount/"
 
-$mountsJson | ConvertTo-Json -Depth 4 | Set-Content "$srcDir/tests/cluster/mount/mounts.json"
+# $mountsJson = (,@(
+#   @{
+#     storageAccountName=$resourceName
+#     secretScope="secrets"
+#     clientIdName="Databricks--ClientId"
+#     clientSecretName="Databricks--ClientSecret"
+#     tenantIdName="Databricks--TenantId"
+#     containers = [array]$($dataLakeContainers | ForEach-Object{ $_.name })
+#   }
+# ))
 
-dbx deploy --deployment-file  "$srcDir/tests/cluster/mount/setup_job.yml.j2"
+# $mountsJson | ConvertTo-Json -Depth 4 | Set-Content "$srcDir/tests/cluster/mount/mounts.json"
 
-dbx launch --job="Setup Mounts" --trace --kill-on-sigterm
+# dbx deploy --deployment-file  "$srcDir/tests/cluster/mount/setup_job.yml.j2"
 
-Pop-Location
+# dbx launch --job="Setup Mounts" --trace --kill-on-sigterm
+
+# Pop-Location
