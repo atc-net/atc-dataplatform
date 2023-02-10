@@ -8,9 +8,15 @@ $dbworkspaceid = az resource show `
 $unityCatalog = databricks unity-catalog metastores create `
     --name my-metastore `
     --region $location `
-    --storage-root "abfss://silver@"+$dataLakeName+".dfs.core.windows.net/meta"
+    --storage-root "abfss://silver@"+$dataLakeName+".dfs.core.windows.net/meta" `
+    | jq '.metastore_id'
+
+#Bad way of accessing the catalog id
+# The jq utility package could be helpful
+# See: https://rajanieshkaushikk.com/2023/01/17/demystifying-azure-databricks-unity-catalog/
+$unityCatalogId = (-split $unityCatalog[7])[1] -replace '"', "" -replace ",", ""
 
 databricks unity-catalog metastores assign `
     --workspace-id $dbworkspaceid `
-    --metastore-id $unityCatalog.metastore_id `
+    --metastore-id $unityCatalogId `
     --default-catalog-name main
