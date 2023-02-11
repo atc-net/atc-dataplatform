@@ -18,7 +18,7 @@ class ChildCacher(CachedLoader):
 
     def write_operation(self, df: DataFrame):
         self.to_be_written = df
-        self.written = df.filter(df["b"].isin([1, 2]))
+        self.written = df.filter(df["beta"].isin([1, 2]))
         DeltaHandle.from_tc("CachedTestTarget").append(self.written)
         return self.written.withColumn("myId", f.lit(12345))
 
@@ -26,8 +26,8 @@ class ChildCacher(CachedLoader):
         target_name = Configurator().table_name("CachedTestTarget")
 
         self.to_be_deleted = df
-        Spark.get().sql(f"DELETE FROM {target_name} WHERE b = 8")
-        self.deleted = df.filter(df["b"] == 8)
+        Spark.get().sql(f"DELETE FROM {target_name} WHERE beta = 8")
+        self.deleted = df.filter(f.col["beta"] == 8)
         return self.deleted
 
 
@@ -112,8 +112,8 @@ class CachedLoaderTests(unittest.TestCase):
             """
             CREATE TABLE IF NOT EXISTS {CachedTest_name}
             (
-                a STRING,
-                b INTEGER,
+                alpha STRING,
+                beta INTEGER,
                 rowHash INTEGER,
                 loadedTime TIMESTAMP,
                 deletedTime TIMESTAMP,
@@ -131,8 +131,8 @@ class CachedLoaderTests(unittest.TestCase):
             """
             CREATE TABLE IF NOT EXISTS {CachedTestTarget_name}
             (
-                a STRING,
-                b INTEGER,
+                alpha STRING,
+                beta INTEGER,
                 payload STRING
             )
             USING DELTA
@@ -145,7 +145,7 @@ class CachedLoaderTests(unittest.TestCase):
 
         cls.params = CachedLoaderParameters(
             cache_table_name=tc.table_name("CachedTest"),
-            key_cols=["a", "b"],
+            key_cols=["alpha", "beta"],
             cache_id_cols=["myId"],
         )
 
