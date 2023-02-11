@@ -8,9 +8,9 @@ from atc.configurator.configurator import Configurator  # noqa: F401
 
 from .version import __version__  # noqa: F401
 
-DEBUG = False
+__DEBUG__ = False
 
 
 def dbg(*args, **kwargs):
-    if DEBUG:
+    if __DEBUG__:
         print(*args, **kwargs)
