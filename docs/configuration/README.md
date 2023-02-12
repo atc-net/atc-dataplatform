@@ -256,6 +256,7 @@ is replaced with the string 'mnt' while in debug it is replaced with 'tmp'.
 The intended usage is in paths where production tables are mounted on
 external storage, typically mounted under "/mnt" whereas test tables 
 should be written to "/tmp" you can use is as in this example:
+
 ```yaml
 MyTable:
   name: mydb{ID}.data_table
