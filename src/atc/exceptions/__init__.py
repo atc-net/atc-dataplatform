@@ -50,3 +50,8 @@ class NoDbUtils(AtcException):
 
 class NoSuchValueException(AtcKeyError):
     pass
+
+
+class MissingUpsertJoinColumns(AtcKeyError):
+    value = "You must specify upsert_join_cols"
+    pass

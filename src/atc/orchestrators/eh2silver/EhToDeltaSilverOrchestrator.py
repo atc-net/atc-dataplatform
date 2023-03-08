@@ -5,6 +5,7 @@ from atc.etl import EtlBase, Orchestrator
 from atc.etl.extractors import IncrementalExtractor, SimpleExtractor
 from atc.etl.loaders import SimpleLoader
 from atc.etl.loaders.UpsertLoader import UpsertLoader
+from atc.exceptions import MissingUpsertJoinColumns
 from atc.orchestrators.ehjson2delta.EhJsonToDeltaTransformer import (
     EhJsonToDeltaTransformer,
 )
@@ -41,8 +42,10 @@ class EhToDeltaSilverOrchestrator(Orchestrator):
 
         # step 1
         # Extracts the data from the bronze layer
-        if mode == "upsert":
-            assert upsert_join_cols is not None, "You must specify upsert_join_cols"
+        if mode == "upsert" or mode == "append":
+            if mode == "upsert":
+                if upsert_join_cols is None:
+                    raise MissingUpsertJoinColumns
             self.extract_from(
                 IncrementalExtractor(
                     handle_source=self.dh_source,
