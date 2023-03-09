@@ -1,11 +1,14 @@
 from pyspark.sql import DataFrame
 
 from atc.configurator.configurator import Configurator
+from atc.delta.delta_handle import DeltaHandleInvalidFormat
 from atc.spark import Spark
-from atc.tables import TableHandle
+
+# from atc.tables import TableHandle
 
 
-class AutoloaderStreamHandle:
+# class AutoloaderHandle(TableHandle) # Should it inherit?
+class AutoloaderHandle:
     def __init__(
         self,
         *,
@@ -39,7 +42,7 @@ class AutoloaderStreamHandle:
         self._validate_checkpoint()
 
     @classmethod
-    def from_tc(cls, id: str) -> "AutoloaderStreamHandle":
+    def from_tc(cls, id: str) -> "AutoloaderHandle":
         tc = Configurator()
         return cls(
             location=tc.table_property(id, "path", None),
@@ -50,7 +53,7 @@ class AutoloaderStreamHandle:
     def _validate(self):
         """Validates that the name is either db.table or just table."""
         if self._data_format == "delta":
-            raise DeltaHandleInvalidFormat("Use DeltaStreamHandle for delta.")
+            raise DeltaHandleInvalidFormat("Use DeltaHandle.read_stream() for delta.")
 
     def _validate_checkpoint(self):
         if "/_" not in self._checkpoint_path:
@@ -60,7 +63,7 @@ class AutoloaderStreamHandle:
                 "structure such as <table_name>/_checkpoints"
             )
 
-    def read(self) -> DataFrame:
+    def read_stream(self) -> DataFrame:
         reader = (
             Spark.get()
             .readStream.format("cloudFiles")
