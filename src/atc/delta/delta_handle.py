@@ -9,6 +9,8 @@ from atc.functions import get_unique_tempview_name, init_dbutils
 from atc.spark import Spark
 from atc.tables import TableHandle
 from atc.utils.CheckDfMerge import CheckDfMerge
+
+# from atc.utils.FileExists import file_exists
 from atc.utils.GetMergeStatement import GetMergeStatement
 
 
@@ -118,11 +120,11 @@ class DeltaHandle(TableHandle):
     def truncate(self) -> None:
         Spark.get().sql(f"TRUNCATE TABLE {self._name};")
 
-        self.remove_checkpoint()
+        # self.remove_checkpoint()
 
     def drop(self) -> None:
         Spark.get().sql(f"DROP TABLE IF EXISTS {self._name};")
-        self.remove_checkpoint()
+        # self.remove_checkpoint()
 
     def drop_and_delete(self) -> None:
         self.drop()
@@ -130,7 +132,7 @@ class DeltaHandle(TableHandle):
             init_dbutils().fs.rm(self._location, True)
 
     def create_hive_table(self) -> None:
-        self.remove_checkpoint()
+        # self.remove_checkpoint()
         sql = f"CREATE TABLE IF NOT EXISTS {self._name} "
         if self._location:
             sql += f" USING DELTA LOCATION '{self._location}'"
@@ -248,7 +250,9 @@ class DeltaHandle(TableHandle):
         ), f"Streaming not available for Spark version {Spark.version()}"
 
         reader = (
-            Spark.get().readStream.format(self._format).options(**self._options_dict)
+            Spark.get()
+            .readStream.format(self._data_format)
+            .options(**self._options_dict)
         )
         if self._location:
             df = reader.load(self._location)
@@ -256,3 +260,7 @@ class DeltaHandle(TableHandle):
             df = reader.table(self._table_name)
 
         return df
+
+    # def remove_checkpoint(self):
+    #    if not file_exists(self._checkpoint_path):
+    #        init_dbutils().fs.mkdirs(self._checkpoint_path)
