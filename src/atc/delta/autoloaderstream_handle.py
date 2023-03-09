@@ -3,10 +3,9 @@ from pyspark.sql import DataFrame
 from atc.configurator.configurator import Configurator
 from atc.spark import Spark
 from atc.tables import TableHandle
-from atc.tables.SparkHandle import DeltaHandleInvalidFormat
 
 
-class AutoloaderStreamHandle(TableHandle):
+class AutoloaderStreamHandle:
     def __init__(
         self,
         *,
@@ -62,7 +61,6 @@ class AutoloaderStreamHandle(TableHandle):
             )
 
     def read(self) -> DataFrame:
-
         reader = (
             Spark.get()
             .readStream.format("cloudFiles")

@@ -30,3 +30,6 @@ class TableHandle:
 
     def get_tablename(self) -> str:
         raise NotImplementedError()
+
+    def read_stream(self):
+        raise NotImplementedError()
