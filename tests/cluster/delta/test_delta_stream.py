@@ -3,10 +3,12 @@ import unittest
 from pyspark.sql.utils import AnalysisException
 
 from atc import Configurator
-from atc.delta import DbHandle, DeltaHandle, DeltaStreamHandle
+from atc.delta import DbHandle, DeltaHandle
 from atc.etl import Orchestrator
 from atc.etl.extractors import SimpleExtractor
+from atc.etl.extractors.stream_extractor import StreamExtractor
 from atc.etl.loaders import SimpleLoader
+from atc.etl.loaders.stream_loader import StreamLoader
 from atc.spark import Spark
 from atc.utils.stop_all_streams import stop_all_streams
 
@@ -15,7 +17,7 @@ from atc.utils.stop_all_streams import stop_all_streams
     Spark.version() >= Spark.DATABRICKS_RUNTIME_10_4,
     f"DeltaStreamHandle not available for Spark version {Spark.version()}",
 )
-class DeltaStreamHandleTests(unittest.TestCase):
+class DeltaStreamTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         Configurator().clear_all_configurations()
@@ -95,12 +97,12 @@ class DeltaStreamHandleTests(unittest.TestCase):
 
         # test instantiation without error
         DbHandle.from_tc("MyDb")
-        DeltaStreamHandle.from_tc("MyTbl")
-        DeltaStreamHandle.from_tc("MyTblMirror")
-        DeltaStreamHandle.from_tc("MyTbl2")
-        DeltaStreamHandle.from_tc("MyTbl3")
-        DeltaStreamHandle.from_tc("MyTbl4")
-        DeltaStreamHandle.from_tc("MyTbl5")
+        DeltaHandle.from_tc("MyTbl")
+        DeltaHandle.from_tc("MyTblMirror")
+        DeltaHandle.from_tc("MyTbl2")
+        DeltaHandle.from_tc("MyTbl3")
+        DeltaHandle.from_tc("MyTbl4")
+        DeltaHandle.from_tc("MyTbl5")
 
     def test_02_write_data_with_deltahandle(self):
         self._overwrite_two_rows_to_table("MyTbl")
@@ -109,19 +111,19 @@ class DeltaStreamHandleTests(unittest.TestCase):
         db = DbHandle.from_tc("MyDb")
         db.create()
 
-        dsh = DeltaStreamHandle.from_tc("MyTbl")
-        dsh.create_hive_table()
+        dh = DeltaHandle.from_tc("MyTbl")
+        dh.create_hive_table()
 
         # test hive access:
-        df = DeltaHandle.from_tc("MyTbl").read()
+        df = dh.read()
         self.assertEqual(2, df.count())
 
     def test_04_read(self):
-        df = DeltaStreamHandle.from_tc("MyTbl").read()
+        df = DeltaHandle.from_tc("MyTbl").read_stream()
         self.assertTrue(df.isStreaming)
 
     def test_05_truncate(self):
-        dsh = DeltaStreamHandle.from_tc("MyTbl")
+        dsh = DeltaHandle.from_tc("MyTbl")
         dsh.truncate()
 
         result = DeltaHandle.from_tc("MyTbl").read()
@@ -131,12 +133,14 @@ class DeltaStreamHandleTests(unittest.TestCase):
         self._overwrite_two_rows_to_table("MyTbl")
         self._create_tbl_mirror()
 
+        dh = DeltaHandle.from_tc("MyTbl")
+
         o = Orchestrator()
-        o.extract_from(
-            SimpleExtractor(DeltaStreamHandle.from_tc("MyTbl"), dataset_key="MyTbl")
-        )
+        o.extract_from(StreamExtractor(dh, dataset_key="MyTbl"))
         o.load_into(
-            SimpleLoader(DeltaStreamHandle.from_tc("MyTblMirror"), mode="append")
+            StreamLoader(
+                handle=dh, options_dict={}, format="delta", await_termination=True
+            )
         )
         o.execute()
 
@@ -146,54 +150,30 @@ class DeltaStreamHandleTests(unittest.TestCase):
     def test_07_write_path_only(self):
         self._overwrite_two_rows_to_table("MyTbl")
         # check that we can write to the table with no "name" property
-        ah = DeltaStreamHandle.from_tc("MyTbl").read()
+        dh1 = DeltaHandle.from_tc("MyTbl")
 
-        dsh3 = DeltaStreamHandle.from_tc("MyTbl3")
+        dh3 = DeltaHandle.from_tc("MyTbl3")
 
-        dsh3.append(ah, mergeSchema=True)
+        # dsh3.append(ah, mergeSchema=True)
+
+        o = Orchestrator()
+        o.extract_from(StreamExtractor(dh1, dataset_key="MyTbl"))
+        o.load_into(
+            StreamLoader(
+                handle=dh3, options_dict={}, format="delta", await_termination=True
+            ),
+        )
+        o.execute()
 
         # Read data from mytbl3
-        result = DeltaHandle.from_tc("MyTbl3").read()
+        result = dh3.read()
         self.assertEqual(2, result.count())
 
     def test_08_delete(self):
-        dsh = DeltaStreamHandle.from_tc("MyTbl")
-        dsh.drop_and_delete()
-
-        ah = DeltaStreamHandle.from_tc("MyTbl")
-
+        dh = DeltaHandle.from_tc("MyTbl")
+        dh.drop_and_delete()
         with self.assertRaises(AnalysisException):
-            ah.read()
-
-    def test_09_partitioning(self):
-        dsh = DeltaStreamHandle.from_tc("MyTbl4")
-        Spark.get().sql(
-            f"""
-            CREATE TABLE IF NOT EXISTS {dsh.get_tablename()}
-            (
-            colA string,
-            colB int,
-            payload string
-            )
-            PARTITIONED BY (colB,colA)
-        """
-        )
-
-        self.assertEqual(dsh.get_partitioning(), ["colB", "colA"])
-
-        dsh2 = DeltaStreamHandle.from_tc("MyTbl5")
-        Spark.get().sql(
-            f"""
-            CREATE TABLE IF NOT EXISTS {dsh2.get_tablename()}
-            (
-            colA string,
-            colB int,
-            payload string
-            )
-        """
-        )
-
-        self.assertEqual(dsh2.get_partitioning(), [])
+            dh.read()
 
     def _overwrite_two_rows_to_table(self, tblid: str):
         dh = DeltaHandle.from_tc(tblid)

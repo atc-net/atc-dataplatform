@@ -4,8 +4,8 @@ from typing import List, Tuple
 from atc_tools.testing import DataframeTestCase
 
 from atc import Configurator
-from atc.delta import DbHandle, DeltaHandle, DeltaStreamHandle
-from atc.etl.loaders.UpsertLoader import UpsertLoader
+from atc.delta import DbHandle, DeltaHandle
+from atc.etl.loaders.UpsertLoaderStreaming import UpsertLoaderStreaming
 from atc.functions import init_dbutils
 from atc.spark import Spark
 from atc.utils import DataframeCreator
@@ -20,7 +20,6 @@ from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
     f"UpsertLoader for streaming not available for Spark version {Spark.version()}",
 )
 class UpsertLoaderTestsDeltaStream(DataframeTestCase):
-
     source_table_checkpoint_path = None
     join_cols = ["col1", "col2"]
 
@@ -40,7 +39,7 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
 
     dummy_schema = None
     target_dh_dummy: DeltaHandle = None
-    target_ah_dummy: DeltaStreamHandle = None
+    target_ah_dummy: DeltaHandle = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -74,11 +73,10 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
             init_dbutils().fs.mkdirs(source_table_checkpoint_path)
 
         # Autoloader pointing at source table
-        cls.source_ah = DeltaStreamHandle.from_tc(cls.source_table_id)
+        cls.source_dh = DeltaHandle.from_tc(cls.source_table_id)
 
         # Autoloader/Deltahandle pointing at target table
-        cls.target_ah_dummy = DeltaStreamHandle.from_tc("UpsertLoaderDummy")
-        cls.target_dh_dummy = DeltaHandle.from_tc("UpsertLoaderDummy")
+        cls.target_ah_dummy = DeltaHandle.from_tc("UpsertLoaderDummy")
 
         # Create target table
         SparkSqlExecutor().execute_sql_file("upsertloader-test")
@@ -103,9 +101,17 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
 
         self._create_test_source_data(data=self.data1)
 
-        loader = UpsertLoader(handle=self.target_ah_dummy, join_cols=self.join_cols)
+        loader = UpsertLoaderStreaming(
+            handle=self.target_ah_dummy,
+            format="delta",
+            options_dict={},
+            trigger_type="availablenow",
+            checkpoint_path=self.source_table_checkpoint_path,
+            await_termination=True,
+            upsert_join_cols=self.join_cols,
+        )
 
-        source_df = self.source_ah.read()
+        source_df = self.source_dh.read()
 
         loader.save(source_df)
 
@@ -119,11 +125,19 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
         existing_rows = self.target_dh_dummy.read().collect()
         self.assertEqual(2, len(existing_rows))
 
-        loader = UpsertLoader(handle=self.target_ah_dummy, join_cols=self.join_cols)
+        loader = UpsertLoaderStreaming(
+            handle=self.target_ah_dummy,
+            format="delta",
+            options_dict={},
+            trigger_type="availablenow",
+            checkpoint_path=self.source_table_checkpoint_path,
+            await_termination=True,
+            upsert_join_cols=self.join_cols,
+        )
 
         self._create_test_source_data(data=self.data2)
 
-        source_df = self.source_ah.read()
+        source_df = self.source_dh.read()
 
         loader.save(source_df)
 
@@ -138,11 +152,19 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
         existing_rows = self.target_dh_dummy.read().collect()
         self.assertEqual(3, len(existing_rows))
 
-        loader = UpsertLoader(handle=self.target_ah_dummy, join_cols=self.join_cols)
+        loader = UpsertLoaderStreaming(
+            handle=self.target_ah_dummy,
+            format="delta",
+            options_dict={},
+            trigger_type="availablenow",
+            checkpoint_path=self.source_table_checkpoint_path,
+            await_termination=True,
+            upsert_join_cols=self.join_cols,
+        )
 
         self._create_test_source_data(data=self.data3)
 
-        source_df = self.source_ah.read()
+        source_df = self.source_dh.read()
 
         loader.save(source_df)
 
@@ -151,7 +173,6 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
     def _create_test_source_data(
         self, tableid: str = None, data: List[Tuple[int, int, str]] = None
     ):
-
         if tableid is None:
             tableid = self.source_table_id
         if data is None:

@@ -3,10 +3,11 @@ import uuid as _uuid
 from typing import List, Tuple
 
 from atc import Configurator
-from atc.delta import AutoloaderStreamHandle, DbHandle, DeltaHandle, DeltaStreamHandle
+from atc.autoloader.autoloaderstream_handle import AutoloaderHandle
+from atc.delta import DbHandle, DeltaHandle
 from atc.etl import Orchestrator
-from atc.etl.extractors import SimpleExtractor
-from atc.etl.loaders import SimpleLoader
+from atc.etl.extractors.stream_extractor import StreamExtractor
+from atc.etl.loaders.stream_loader import StreamLoader
 from atc.functions import init_dbutils
 from atc.spark import Spark
 from atc.utils.FileExists import file_exists
@@ -83,16 +84,16 @@ class AutoloaderTests(unittest.TestCase):
 
         # test instantiation without error
         DbHandle.from_tc("MyDb")
-        AutoloaderStreamHandle.from_tc("AvroSource")
-        DeltaStreamHandle.from_tc("AvroSink")
+        AutoloaderHandle.from_tc("AvroSource")
+        DeltaHandle.from_tc("AvroSink")
 
     def test_01_read_avro(self):
         DbHandle.from_tc("MyDb").create()
 
-        dsh_sink = DeltaStreamHandle.from_tc("AvroSink")
+        dh_sink = DeltaHandle.from_tc("AvroSink")
         Spark.get().sql(
             f"""
-                            CREATE TABLE {dsh_sink.get_tablename()}
+                            CREATE TABLE {dh_sink.get_tablename()}
                             (
                             id int,
                             name string,
@@ -105,12 +106,20 @@ class AutoloaderTests(unittest.TestCase):
 
         o = Orchestrator()
         o.extract_from(
-            SimpleExtractor(
-                AutoloaderStreamHandle.from_tc("AvroSource"), dataset_key="AvroSource"
+            StreamExtractor(
+                AutoloaderHandle.from_tc("AvroSource"), dataset_key="AvroSource"
             )
         )
 
-        o.load_into(SimpleLoader(dsh_sink, mode="append"))
+        o.load_into(
+            StreamLoader(
+                handle=dh_sink,
+                options_dict={},
+                format="delta",
+                await_termination=True,
+                mode="append",
+            )
+        )
         o.execute()
 
         result = DeltaHandle.from_tc("AvroSink").read()

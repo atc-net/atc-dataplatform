@@ -1,11 +1,9 @@
-from abc import abstractmethod
-from typing import List, Union
+from typing import List
 
 from pyspark.pandas import DataFrame
 from pyspark.sql.streaming import DataStreamWriter
 
 from atc.etl import Loader
-from atc.etl.loaders.simple_loader import Appendable, Overwritable
 from atc.functions import init_dbutils
 from atc.spark import Spark
 from atc.tables import TableHandle
@@ -17,11 +15,11 @@ class StreamLoader(Loader):
         self,
         handle: TableHandle,
         *,
-        mode: str = "overwrite",
         format: str,
         options_dict: dict,
+        mode: str = "overwrite",
         trigger_type: str = None,
-        loader: Loader = None,
+        # loader: Loader = None,
         trigger_time_seconds: int = None,
         outputmode: str = "update",
         query_name: str = None,
@@ -60,7 +58,7 @@ class StreamLoader(Loader):
         self._trigger_type = trigger_type
         self._trigger_time_seconds = trigger_time_seconds
         self._query_name = query_name
-        self._loader = loader
+        # self._loader = loader
         self._checkpoint_path = checkpoint_path
         self._await_termination = await_termination
         self._join_cols = upsert_join_cols

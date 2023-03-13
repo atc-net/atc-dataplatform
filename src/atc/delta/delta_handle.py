@@ -4,6 +4,8 @@ from typing import List, Optional, Union
 from pyspark.sql import DataFrame
 
 from atc.configurator.configurator import Configurator
+from atc.etl import Loader
+from atc.etl.loaders.stream_loader import StreamLoader
 from atc.exceptions import AtcException
 from atc.functions import get_unique_tempview_name, init_dbutils
 from atc.spark import Spark
@@ -66,6 +68,10 @@ class DeltaHandle(TableHandle):
             name=tc.table_property(id, "name", ""),
             location=tc.table_property(id, "path", ""),
             data_format=tc.table_property(id, "format", "delta"),
+            options_dict=tc.table_property(id, "options_dict", ""),
+            ignore_changes=tc.table_property(id, "ignore_changes", ""),
+            stream_start=tc.table_property(id, "stream_start", ""),
+            max_bytes_per_trigger=tc.table_property(id, "max_bytes_per_trigger", ""),
         )
 
     def _validate(self):

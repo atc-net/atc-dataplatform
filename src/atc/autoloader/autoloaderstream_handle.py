@@ -3,12 +3,10 @@ from pyspark.sql import DataFrame
 from atc.configurator.configurator import Configurator
 from atc.delta.delta_handle import DeltaHandleInvalidFormat
 from atc.spark import Spark
+from atc.tables import TableHandle
 
-# from atc.tables import TableHandle
 
-
-# class AutoloaderHandle(TableHandle) # Should it inherit?
-class AutoloaderHandle:
+class AutoloaderHandle(TableHandle):
     def __init__(
         self,
         *,
