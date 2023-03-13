@@ -1,4 +1,5 @@
 import json
+from string import Formatter
 from typing import Dict
 
 import pyspark.sql.types as T
@@ -10,6 +11,7 @@ from atc.exceptions import (
     NoSuchValueException,
     UnregisteredSchemaDefinitionException,
 )
+from atc.schema_manager.spark_schema import get_schema
 from atc.singleton import Singleton
 
 
@@ -61,7 +63,23 @@ class SchemaManager(metaclass=Singleton):
 
         # Check if the schema is a sql string
         if key == "sql":
-            parsed_schema = T._parse_datatype_string(value)
+            # Check for substitutions like {} contained in the value:
+            other_schema_keys = set(
+                i[1] for i in Formatter().parse(value) if i[1] is not None
+            )
+            replacements = {}
+            for other_key in other_schema_keys:
+                if other_key.endswith("_schema"):
+                    other_base_key = other_key[: -len("_schema")]
+                    replacements[other_key] = self.get_schema_as_string(other_base_key)
+                else:
+                    replacements[other_key] = Configurator().get_all_details()[
+                        other_key
+                    ]
+            if replacements:
+                value = value.format(**replacements)
+
+            parsed_schema = get_schema(value)
             if not isinstance(parsed_schema, T.StructType):
                 raise FalseSchemaDefinitionException()
             self._registered_schemas[schema_identifier] = parsed_schema
@@ -93,6 +111,7 @@ class SchemaManager(metaclass=Singleton):
         return str_schema
 
     def get_schema_as_string(self, schema_identifier: str) -> str:
+        "return schema as a sql schema string"
         schema = self.get_schema(schema_identifier)
 
         str_schema = self._schema_to_spark_sql(schema)
