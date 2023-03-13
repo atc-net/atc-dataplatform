@@ -1,5 +1,3 @@
-from typing import Protocol
-
 from pyspark.sql import DataFrame
 
 from atc.etl import Extractor

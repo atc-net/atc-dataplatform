@@ -47,7 +47,6 @@ class SimpleSqlServerETLTests(unittest.TestCase):
         cls.tc.reset(debug=False)
 
     def test01_can_transform(self):
-
         self.create_test_table()
         df = self.create_data()
 

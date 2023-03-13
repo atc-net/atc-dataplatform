@@ -31,7 +31,6 @@ class TestSchemaManager(DataframeTestCase):
         self.assertEqualSchema(schema, expected_schema)
 
     def test_get_schema_as_string(self):
-
         schema = SchemaManager().get_schema_as_string(
             schema_identifier="SchemaTestTable2"
         )
@@ -39,7 +38,6 @@ class TestSchemaManager(DataframeTestCase):
         self.assertEqual(schema, "a int, b string")
 
     def test_get_all_schemas(self):
-
         schemas_dict = SchemaManager().get_all_schemas()
 
         expected_schemas = {

@@ -5,9 +5,7 @@ from pyspark.sql.utils import AnalysisException
 from atc import Configurator
 from atc.delta import DbHandle, DeltaHandle
 from atc.etl import Orchestrator
-from atc.etl.extractors import SimpleExtractor
 from atc.etl.extractors.stream_extractor import StreamExtractor
-from atc.etl.loaders import SimpleLoader
 from atc.etl.loaders.stream_loader import StreamLoader
 from atc.spark import Spark
 from atc.utils.stop_all_streams import stop_all_streams

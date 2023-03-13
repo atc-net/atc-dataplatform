@@ -4,8 +4,6 @@ from typing import List, Optional, Union
 from pyspark.sql import DataFrame
 
 from atc.configurator.configurator import Configurator
-from atc.etl import Loader
-from atc.etl.loaders.stream_loader import StreamLoader
 from atc.exceptions import AtcException
 from atc.functions import get_unique_tempview_name, init_dbutils
 from atc.spark import Spark
