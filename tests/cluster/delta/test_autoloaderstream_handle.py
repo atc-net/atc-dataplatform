@@ -3,7 +3,7 @@ import uuid as _uuid
 from typing import List, Tuple
 
 from atc import Configurator
-from atc.autoloader.autoloaderstream_handle import AutoloaderHandle
+from atc.autoloader import AutoloaderHandle
 from atc.delta import DbHandle, DeltaHandle
 from atc.etl import Orchestrator
 from atc.etl.extractors.stream_extractor import StreamExtractor
