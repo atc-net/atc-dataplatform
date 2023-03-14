@@ -18,7 +18,7 @@ class StreamLoader(Loader):
         format: str,
         options_dict: dict,
         mode: str = "overwrite",
-        trigger_type: str = None,
+        trigger_type: str = "availablenow",
         # loader: Loader = None,
         trigger_time_seconds: int = None,
         outputmode: str = "update",
