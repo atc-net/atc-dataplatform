@@ -1,1 +1,1 @@
-from .autoloaderstream_handle import AutoloaderHandle  # noqa: F401
+from .autoloader_handle import AutoloaderHandle  # noqa: F401
