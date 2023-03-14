@@ -43,9 +43,9 @@ class AutoloaderHandle(TableHandle):
     def from_tc(cls, id: str) -> "AutoloaderHandle":
         tc = Configurator()
         return cls(
-            location=tc.table_property(id, "path", None),
-            data_format=tc.table_property(id, "format", None),
-            checkpoint_path=tc.table_property(id, "checkpoint_path", None),
+            location=tc.table_property(id, "path", ""),
+            data_format=tc.table_property(id, "format", ""),
+            checkpoint_path=tc.table_property(id, "checkpoint_path", ""),
         )
 
     def _validate(self):
