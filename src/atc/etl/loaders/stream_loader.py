@@ -1,3 +1,4 @@
+import uuid as _uuid
 from typing import List
 
 from pyspark.sql import DataFrame
@@ -57,7 +58,7 @@ class StreamLoader(Loader):
         self._outputmode = outputmode
         self._trigger_type = trigger_type
         self._trigger_time_seconds = trigger_time_seconds
-        self._query_name = query_name
+        self._query_name = query_name or str(_uuid.uuid4().hex)
         # self._loader = loader
         self._checkpoint_path = checkpoint_path
         self._await_termination = await_termination
