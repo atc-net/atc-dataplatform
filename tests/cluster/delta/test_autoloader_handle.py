@@ -68,8 +68,10 @@ class AutoloaderTests(unittest.TestCase):
         )
 
         # Add sink table
-        sink_checkpoint_path = "/mnt/atc/silver/testdb{ID}/_checkpoint_path_avrosink"
-        init_dbutils().fs.mkdirs(sink_checkpoint_path)
+        self.sink_checkpoint_path = (
+            "/mnt/atc/silver/testdb{ID}/_checkpoint_path_avrosink"
+        )
+        init_dbutils().fs.mkdirs(self.sink_checkpoint_path)
         # add eventhub sink
         tc.register(
             "AvroSink",
@@ -77,7 +79,7 @@ class AutoloaderTests(unittest.TestCase):
                 "name": "{MyDb}.AvroSink",
                 "path": "{MyDb_path}/AvroSink",
                 "format": "delta",
-                "checkpoint_path": sink_checkpoint_path,
+                "checkpoint_path": self.sink_checkpoint_path,
                 "await_termination": True,
             },
         )
@@ -118,6 +120,7 @@ class AutoloaderTests(unittest.TestCase):
                 format="delta",
                 await_termination=True,
                 mode="append",
+                checkpoint_path=self.sink_checkpoint_path,
             )
         )
         o.execute()
