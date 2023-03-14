@@ -1,5 +1,5 @@
 from atc.sql.SqlExecutor import SqlExecutor
-from tests.cluster.delta import extras
+from tests.cluster.job1.delta import extras
 
 
 class SparkSqlExecutor(SqlExecutor):

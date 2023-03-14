@@ -74,12 +74,14 @@ issues. Please use the Spark.get().sql() or SqlServer.sql() instead.*
 
 In the example below the SqlExecutor is inherited, and your sql server is used 
 (see [SQL Server Class](#sql-server-class)). Furthermore, provide the module of the 
-sql-files which can be executed into the *base_module*-variable.  
- 
+sql-files which can be executed into the *base_module*-variable.
+
 ```python
-from tests.cluster.sql import extras
-from tests.cluster.sql.DeliverySqlServer import DeliverySqlServer
+
+from tests.cluster.job1.sql import extras
+from tests.cluster.job1.sql import DeliverySqlServer
 from atc.sql import SqlExecutor
+
 
 class DeliverySqlExecutor(SqlExecutor):
     def __init__(self):
@@ -100,8 +102,9 @@ In the setup job, one could consider to create all delivery SQL tables:
 
 ```python
 from atc.configurator import Configurator
-from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
-from tests.cluster.sql.DeliverySqlExecutor import DeliverySqlExecutor
+from tests.cluster.job1.delta.SparkExecutor import SparkSqlExecutor
+from tests.cluster.job1.sql.DeliverySqlExecutor import DeliverySqlExecutor
+
 
 # In setup.py
 def setup_production_tables():

@@ -1,6 +1,6 @@
 from atc.sql.SqlExecutor import SqlExecutor
-from tests.cluster.sql import extras
-from tests.cluster.sql.DeliverySqlServer import DeliverySqlServer
+from tests.cluster.job1.sql import extras
+from tests.cluster.job1.sql.DeliverySqlServer import DeliverySqlServer
 
 
 class DeliverySqlExecutor(SqlExecutor):
