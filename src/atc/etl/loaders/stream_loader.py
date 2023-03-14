@@ -1,6 +1,6 @@
 from typing import List
 
-from pyspark.pandas import DataFrame
+from pyspark.sql import DataFrame
 from pyspark.sql.streaming import DataStreamWriter
 
 from atc.etl import Loader
