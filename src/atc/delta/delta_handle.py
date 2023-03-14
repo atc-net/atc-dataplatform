@@ -48,7 +48,8 @@ class DeltaHandle(TableHandle):
         self._partitioning: Optional[List[str]] = None
         self._validate()
 
-        self._options_dict = options_dict
+        self._options_dict = options_dict if options_dict is not None else {}
+
         self._options_dict["ignoreChanges"] = str(ignore_changes)
 
         if stream_start:
