@@ -43,21 +43,21 @@ class DeltaHandle(TableHandle):
         self._location = location
         self._data_format = data_format
 
-        self._location = location
-
         self._partitioning: Optional[List[str]] = None
         self._validate()
 
-        self._options_dict = options_dict if options_dict is not None else {}
+        self._options_dict = (
+            {} if options_dict is None or options_dict == "" else options_dict
+        )
 
         self._options_dict.update({"ignoreChanges": str(ignore_changes)})
 
-        if stream_start:
+        if stream_start and stream_start != "":
             self._options_dict["startingTimestamp"] = stream_start.strftime(
                 "%Y-%m-%dT%H:%M:%S.%fZ"
             )
 
-        if max_bytes_per_trigger:
+        if max_bytes_per_trigger and max_bytes_per_trigger != "":
             self._options_dict["maxBytesPerTrigger"] = max_bytes_per_trigger
 
     @classmethod
@@ -67,10 +67,10 @@ class DeltaHandle(TableHandle):
             name=tc.table_property(id, "name", ""),
             location=tc.table_property(id, "path", ""),
             data_format=tc.table_property(id, "format", "delta"),
-            options_dict=tc.table_property(id, "options_dict", None),
+            options_dict=tc.table_property(id, "options_dict", ""),
             ignore_changes=tc.table_property(id, "ignore_changes", "True"),
-            stream_start=tc.table_property(id, "stream_start", None),
-            max_bytes_per_trigger=tc.table_property(id, "max_bytes_per_trigger", None),
+            stream_start=tc.table_property(id, "stream_start", ""),
+            max_bytes_per_trigger=tc.table_property(id, "max_bytes_per_trigger", ""),
         )
 
     def _validate(self):
