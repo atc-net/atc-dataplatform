@@ -50,7 +50,7 @@ class DeltaHandle(TableHandle):
 
         self._options_dict = options_dict if options_dict is not None else {}
 
-        self._options_dict["ignoreChanges"] = str(ignore_changes)
+        self._options_dict.update({"ignoreChanges": str(ignore_changes)})
 
         if stream_start:
             self._options_dict["startingTimestamp"] = stream_start.strftime(
@@ -67,10 +67,10 @@ class DeltaHandle(TableHandle):
             name=tc.table_property(id, "name", ""),
             location=tc.table_property(id, "path", ""),
             data_format=tc.table_property(id, "format", "delta"),
-            options_dict=tc.table_property(id, "options_dict", ""),
+            options_dict=tc.table_property(id, "options_dict", None),
             ignore_changes=tc.table_property(id, "ignore_changes", "True"),
-            stream_start=tc.table_property(id, "stream_start", ""),
-            max_bytes_per_trigger=tc.table_property(id, "max_bytes_per_trigger", ""),
+            stream_start=tc.table_property(id, "stream_start", None),
+            max_bytes_per_trigger=tc.table_property(id, "max_bytes_per_trigger", None),
         )
 
     def _validate(self):
