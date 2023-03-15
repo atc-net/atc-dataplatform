@@ -90,7 +90,7 @@ class StreamLoader(Loader):
             df.writeStream.format(self._format)
             .options(**self._options_dict)
             .outputMode(self._outputmode)
-            .queryName(self._query_name)  # can it be none?
+            .queryName(self._query_name)
         )
 
         df_stream = self._add_trigger_type(df_stream)

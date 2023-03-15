@@ -91,6 +91,7 @@ class AutoloaderTests(unittest.TestCase):
         DeltaHandle.from_tc("AvroSink")
 
     def test_01_read_avro(self):
+        tc = Configurator()
         DbHandle.from_tc("MyDb").create()
 
         dh_sink = DeltaHandle.from_tc("AvroSink")
@@ -102,6 +103,8 @@ class AutoloaderTests(unittest.TestCase):
                             name string,
                             _rescued_data string
                             )
+                            USING DELTA
+                            LOCATION '{tc.get("AvroSink","path")}'
                         """
         )
 
