@@ -24,6 +24,7 @@ from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
     f"UpsertLoader for streaming not available for Spark version {Spark.version()}",
 )
 class UpsertLoaderTestsDeltaStream(DataframeTestCase):
+    target_dh: DeltaHandle
     target_id = "UpsertLoaderStreamingTarget"
     source_id = "UpsertLoaderStreamingSource"
 
@@ -53,8 +54,8 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
         cls.source_dh = DeltaHandle.from_tc(cls.source_id)
         cls.target_dh = DeltaHandle.from_tc(cls.target_id)
 
-        # cls.dummy_schema = cls.target_dh_dummy.read().schema
-        #
+        cls.dummy_schema = cls.target_dh.read().schema
+
         # # make sure target is empty and has a schema
         # df_empty = DataframeCreator.make_partial(cls.dummy_schema, [], [])
         # cls.target_dh_dummy.overwrite(df_empty)
