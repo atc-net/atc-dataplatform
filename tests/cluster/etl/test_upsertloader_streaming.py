@@ -5,11 +5,15 @@ from atc_tools.testing import DataframeTestCase
 
 from atc import Configurator
 from atc.delta import DbHandle, DeltaHandle
+from atc.etl import Orchestrator
+from atc.etl.extractors.stream_extractor import StreamExtractor
 from atc.etl.loaders.UpsertLoaderStreaming import UpsertLoaderStreaming
-from atc.functions import init_dbutils
+
+# from atc.functions import init_dbutils
 from atc.spark import Spark
 from atc.utils import DataframeCreator
-from atc.utils.FileExists import file_exists
+
+# from atc.utils.FileExists import file_exists
 from atc.utils.stop_all_streams import stop_all_streams
 from tests.cluster.delta import extras
 from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
@@ -20,7 +24,9 @@ from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
     f"UpsertLoader for streaming not available for Spark version {Spark.version()}",
 )
 class UpsertLoaderTestsDeltaStream(DataframeTestCase):
-    source_table_checkpoint_path = None
+    target_id = "UpsertLoaderTarget"
+    source_id = "UpsertLoaderSource"
+
     join_cols = ["col1", "col2"]
 
     data1 = [
@@ -35,11 +41,6 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
     data4 = [(1, 2, "baz"), (5, 6, "boo"), (5, 7, "spam"), (7, 8, "bar")]
 
     dummy_columns: List[str] = ["col1", "col2", "col3"]
-    source_table_id: str = "Test1Table"
-
-    dummy_schema = None
-    target_dh_dummy: DeltaHandle = None
-    target_ah_dummy: DeltaHandle = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -47,53 +48,23 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
         tc.add_resource_path(extras)
         tc.set_debug()
 
-        # Database for the source table
-        tc.register(
-            "AutoDbUpsert",
-            {"name": "TestUpsertAutoDb{ID}", "path": "/mnt/atc/silver/testdb{ID}"},
-        )
-        DbHandle.from_tc("AutoDbUpsert").create()
-
-        # Register the source table
-        source_table_checkpoint_path = (
-            "tmp/" + cls.source_table_id + "/_checkpoint_path"
-        )
-        tc.register(
-            cls.source_table_id,
-            {
-                "name": "TestUpsertAutoDb{ID}." + cls.source_table_id,
-                "path": "/mnt/atc/silver/TestUpsertAutoDb{ID}/" + cls.source_table_id,
-                "format": "delta",
-                "checkpoint_path": source_table_checkpoint_path,
-                "await_termination": True,
-            },
-        )
-
-        if not file_exists(source_table_checkpoint_path):
-            init_dbutils().fs.mkdirs(source_table_checkpoint_path)
-
-        # Autoloader pointing at source table
-        cls.source_dh = DeltaHandle.from_tc(cls.source_table_id)
-
-        # Autoloader/Deltahandle pointing at target table
-        cls.target_ah_dummy = DeltaHandle.from_tc("UpsertLoaderDummy")
-
-        # Create target table
         SparkSqlExecutor().execute_sql_file("upsertloader-test")
 
-        cls.dummy_schema = cls.target_dh_dummy.read().schema
+        cls.source_dh = DeltaHandle.from_tc(cls.source_id)
+        cls.target_dh = DeltaHandle.from_tc(cls.target_id)
 
-        # make sure target is empty and has a schema
-        df_empty = DataframeCreator.make_partial(cls.dummy_schema, [], [])
-        cls.target_dh_dummy.overwrite(df_empty)
+        # cls.dummy_schema = cls.target_dh_dummy.read().schema
+        #
+        # # make sure target is empty and has a schema
+        # df_empty = DataframeCreator.make_partial(cls.dummy_schema, [], [])
+        # cls.target_dh_dummy.overwrite(df_empty)
 
     @classmethod
     def tearDownClass(cls) -> None:
         DbHandle.from_tc("UpsertLoaderDb").drop_cascade()
-        DbHandle.from_tc("AutoDbUpsert").drop_cascade()
 
-        if file_exists(cls.source_table_checkpoint_path):
-            init_dbutils().fs.rm(cls.source_table_checkpoint_path)
+        # if file_exists(cls.source_table_checkpoint_path):
+        #    init_dbutils().fs.rm(cls.source_table_checkpoint_path)
         stop_all_streams()
 
     def test_01_can_perform_incremental_on_empty(self):
@@ -101,80 +72,44 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
 
         self._create_test_source_data(data=self.data1)
 
-        loader = UpsertLoaderStreaming(
-            handle=self.target_ah_dummy,
-            format="delta",
-            options_dict={},
-            trigger_type="availablenow",
-            checkpoint_path=self.source_table_checkpoint_path,
-            await_termination=True,
-            upsert_join_cols=self.join_cols,
-        )
+        self.execute_upsert_stream_orchestrator()
 
-        source_df = self.source_dh.read()
-
-        loader.save(source_df)
-
-        self.assertDataframeMatches(self.target_dh_dummy.read(), None, self.data1)
+        self.assertDataframeMatches(self.target_dh.read(), None, self.data1)
 
     def test_02_can_perform_incremental_append(self):
         """The target table is already filled from before.
         One new rows appear in the source table to be streamed
         """
 
-        existing_rows = self.target_dh_dummy.read().collect()
+        existing_rows = self.target_dh.read().collect()
         self.assertEqual(2, len(existing_rows))
-
-        loader = UpsertLoaderStreaming(
-            handle=self.target_ah_dummy,
-            format="delta",
-            options_dict={},
-            trigger_type="availablenow",
-            checkpoint_path=self.source_table_checkpoint_path,
-            await_termination=True,
-            upsert_join_cols=self.join_cols,
-        )
 
         self._create_test_source_data(data=self.data2)
 
-        source_df = self.source_dh.read()
-
-        loader.save(source_df)
+        self.execute_upsert_stream_orchestrator()
 
         self.assertDataframeMatches(
-            self.target_dh_dummy.read(), None, self.data1 + self.data2
+            self.target_dh.read(), None, self.data1 + self.data2
         )
 
     def test_03_can_perform_merge(self):
         """The target table is already filled from before.
         Two new rows appear in the source table - one of them will be merged.
         """
-        existing_rows = self.target_dh_dummy.read().collect()
+        existing_rows = self.target_dh.read().collect()
         self.assertEqual(3, len(existing_rows))
-
-        loader = UpsertLoaderStreaming(
-            handle=self.target_ah_dummy,
-            format="delta",
-            options_dict={},
-            trigger_type="availablenow",
-            checkpoint_path=self.source_table_checkpoint_path,
-            await_termination=True,
-            upsert_join_cols=self.join_cols,
-        )
 
         self._create_test_source_data(data=self.data3)
 
-        source_df = self.source_dh.read()
+        self.execute_upsert_stream_orchestrator()
 
-        loader.save(source_df)
-
-        self.assertDataframeMatches(self.target_dh_dummy.read(), None, self.data4)
+        self.assertDataframeMatches(self.target_dh.read(), None, self.data4)
 
     def _create_test_source_data(
         self, tableid: str = None, data: List[Tuple[int, int, str]] = None
     ):
         if tableid is None:
-            tableid = self.source_table_id
+            tableid = self.source_id
         if data is None:
             raise ValueError("Testdata missing.")
 
@@ -187,6 +122,7 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
             id int,
             name string
             )
+            LOCATION '{Configurator().get(tableid,"path")}'
             """
         )
 
@@ -195,3 +131,19 @@ class UpsertLoaderTestsDeltaStream(DataframeTestCase):
         )
 
         dh.append(df_source)
+
+    def execute_upsert_stream_orchestrator(self):
+        o = Orchestrator()
+        o.extract_from(StreamExtractor(self.source_dh, dataset_key="MyTbl"))
+        o.load_into(
+            UpsertLoaderStreaming(
+                handle=self.target_dh,
+                format="delta",
+                options_dict={},
+                trigger_type="availablenow",
+                checkpoint_path=Configurator().get(self.target_id, "checkpoint_path"),
+                await_termination=True,
+                upsert_join_cols=self.join_cols,
+            )
+        )
+        o.execute()
