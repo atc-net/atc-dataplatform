@@ -24,8 +24,8 @@ from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
     f"UpsertLoader for streaming not available for Spark version {Spark.version()}",
 )
 class UpsertLoaderTestsDeltaStream(DataframeTestCase):
-    target_id = "UpsertLoaderTarget"
-    source_id = "UpsertLoaderSource"
+    target_id = "UpsertLoaderStreamingTarget"
+    source_id = "UpsertLoaderStreamingSource"
 
     join_cols = ["col1", "col2"]
 
