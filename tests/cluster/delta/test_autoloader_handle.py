@@ -124,7 +124,7 @@ class AutoloaderTests(unittest.TestCase):
                 format="delta",
                 await_termination=True,
                 mode="append",
-                checkpoint_path=self.sink_checkpoint_path,
+                checkpoint_path=tc.get("AvroSink", "checkpoint_path"),
             )
         )
         o.execute()
