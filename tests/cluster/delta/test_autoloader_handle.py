@@ -20,6 +20,7 @@ from tests.cluster.values import resourceName
     f"Autoloader not available for Spark version {Spark.version()}",
 )
 class AutoloaderTests(unittest.TestCase):
+    sink_checkpoint_path: str = None
     avrosource_checkpoint_path = (
         f"/mnt/{resourceName()}/silver/{resourceName()}"
         f"/avrolocation/_checkpoint_path_avro"
