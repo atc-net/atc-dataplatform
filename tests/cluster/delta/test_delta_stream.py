@@ -132,12 +132,18 @@ class DeltaStreamTests(unittest.TestCase):
         self._create_tbl_mirror()
 
         dh = DeltaHandle.from_tc("MyTbl")
+        dh_target = DeltaHandle.from_tc("MyTblMirror")
 
         o = Orchestrator()
         o.extract_from(StreamExtractor(dh, dataset_key="MyTbl"))
         o.load_into(
             StreamLoader(
-                handle=dh, options_dict={}, format="delta", await_termination=True
+                handle=dh_target,
+                options_dict={},
+                format="delta",
+                await_termination=True,
+                mode="append",
+                checkpoint_path=Configurator().get("MyTblMirror", "checkpoint_path"),
             )
         )
         o.execute()
@@ -158,7 +164,12 @@ class DeltaStreamTests(unittest.TestCase):
         o.extract_from(StreamExtractor(dh1, dataset_key="MyTbl"))
         o.load_into(
             StreamLoader(
-                handle=dh3, options_dict={}, format="delta", await_termination=True
+                handle=dh3,
+                options_dict={},
+                format="delta",
+                await_termination=True,
+                mode="append",
+                checkpoint_path=Configurator().get("MyTbl3", "checkpoint_path"),
             ),
         )
         o.execute()
@@ -189,5 +200,6 @@ class DeltaStreamTests(unittest.TestCase):
                             id int,
                             name string
                             )
+                            LOCATION '{Configurator().get("MyTblMirror","path")}'
                         """
         )

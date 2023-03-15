@@ -72,7 +72,7 @@ class AutoloaderTests(unittest.TestCase):
         self.sink_checkpoint_path = (
             "/mnt/atc/silver/testdb{ID}/_checkpoint_path_avrosink"
         )
-        init_dbutils().fs.mkdirs(self.sink_checkpoint_path)
+
         # add eventhub sink
         tc.register(
             "AvroSink",
@@ -164,6 +164,7 @@ class AutoloaderTests(unittest.TestCase):
                             name string,
                             _rescued_data string
                             )
+                            LOCATION '{Configurator().get("MyTblMirror","path")}'
                         """
         )
 
