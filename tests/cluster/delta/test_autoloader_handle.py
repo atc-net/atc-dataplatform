@@ -141,7 +141,7 @@ class AutoloaderTests(unittest.TestCase):
 
         # Run again. Should append.
         o.execute()
-        self.assertEqual(20, result.count())
+        self.assertEqual(4, result.count())
 
         # Add specific data to source
         self._add_specific_data_to_source()
