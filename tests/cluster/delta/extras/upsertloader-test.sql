@@ -31,4 +31,4 @@ CREATE TABLE IF NOT EXISTS {UpsertLoaderStreamingTarget}
 )
 USING DELTA
 COMMENT "Contains streaming UpsertLoader test data"
-LOCATION "{UpsertLoaderStreamingSource_path}";
+LOCATION "{UpsertLoaderStreamingTarget_path}";
