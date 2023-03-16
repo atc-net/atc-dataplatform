@@ -228,7 +228,7 @@ class DeltaHandle(TableHandle):
             return self.write_or_append(df, mode="append")
 
         temp_view_name = get_unique_tempview_name()
-        df.createOrReplaceTempView(temp_view_name)
+        df.createOrReplaceGlobalTempView(temp_view_name)
 
         target_table_name = self.get_tablename()
         non_join_cols = [col for col in df.columns if col not in join_cols]
