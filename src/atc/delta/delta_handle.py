@@ -228,7 +228,7 @@ class DeltaHandle(TableHandle):
             return self.write_or_append(df, mode="append")
 
         temp_view_name = get_unique_tempview_name()
-        df.createOrReplaceTempView(temp_view_name)
+        df.createOrReplaceGlobalTempView(temp_view_name)
 
         target_table_name = self.get_tablename()
         non_join_cols = [col for col in df.columns if col not in join_cols]
@@ -236,7 +236,7 @@ class DeltaHandle(TableHandle):
         merge_sql_statement = GetMergeStatement(
             merge_statement_type="delta",
             target_table_name=target_table_name,
-            source_table_name=temp_view_name,
+            source_table_name="global_temp." + temp_view_name,
             join_cols=join_cols,
             insert_cols=df.columns,
             update_cols=non_join_cols,
