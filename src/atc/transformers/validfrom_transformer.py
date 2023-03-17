@@ -8,7 +8,7 @@ from atc.etl import Transformer
 from atc.utils import DropOldestDuplicates
 
 
-class ValidFromTransformer(Transformer):
+class ValidFromToTransformer(Transformer):
     """
     The class introduces SCD2 columns:
         ValidFrom
@@ -25,6 +25,7 @@ class ValidFromTransformer(Transformer):
         self._wnd_cols = wnd_cols
 
     def process(self, df: DataFrame) -> DataFrame:
+        _cols = df.columns
         df = df.withColumn("ValidFrom", f.col(self._time_col))
 
         # Drop duplicates based on the window cols and time col
@@ -36,7 +37,16 @@ class ValidFromTransformer(Transformer):
             orderByColumn=self._time_col,
         )
 
-        max_time = datetime(9999, 1, 1, tzinfo=timezone.utc)
+        # The largest year number allowed in python is 9999
+        # but using this value can cause some pyspark errors
+        # When .collect() the data, the pyspark/sql/types.py
+        # find it as an "Invalid argument"
+
+        # Therefore, this class uses the maz time from pandas
+        # as it seems to allign with pyspark
+        # https://pandas.pydata.org/docs/reference/api/pandas.Timestamp.max.html
+
+        max_time = datetime(2262, 4, 11, tzinfo=timezone.utc)
 
         return (
             df.withColumn(
@@ -47,4 +57,5 @@ class ValidFromTransformer(Transformer):
             )
             .withColumn("ValidTo", f.coalesce(f.col("NextValidFrom"), f.lit(max_time)))
             .withColumn("IsCurrent", f.col("NextValidFrom").isNull())
+            .drop("NextValidFrom")
         )
