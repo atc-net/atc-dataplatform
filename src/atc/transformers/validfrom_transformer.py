@@ -58,4 +58,5 @@ class ValidFromToTransformer(Transformer):
             .withColumn("ValidTo", f.coalesce(f.col("NextValidFrom"), f.lit(max_time)))
             .withColumn("IsCurrent", f.col("NextValidFrom").isNull())
             .drop("NextValidFrom")
+            .select(*_cols, "ValidFrom", "ValidTo", "IsCurrent")
         )
