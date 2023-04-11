@@ -1,8 +1,8 @@
 import unittest
 
 from atc import Configurator
-from tests.cluster.sql.DeliverySqlExecutor import DeliverySqlExecutor
-from tests.cluster.sql.DeliverySqlServer import DeliverySqlServer
+from tests.cluster.job1.sql.DeliverySqlExecutor import DeliverySqlExecutor
+from tests.cluster.job1.sql.DeliverySqlServer import DeliverySqlServer
 
 from . import extras
 

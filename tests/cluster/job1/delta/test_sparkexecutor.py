@@ -3,8 +3,8 @@ import unittest
 from atc import Configurator
 from atc.delta import DbHandle, DeltaHandle
 from atc.spark import Spark
-from tests.cluster.delta import extras
-from tests.cluster.delta.SparkExecutor import SparkSqlExecutor
+from tests.cluster.job1.delta import extras
+from tests.cluster.job1.delta.SparkExecutor import SparkSqlExecutor
 
 
 class DeliverySparkExecutorTests(unittest.TestCase):

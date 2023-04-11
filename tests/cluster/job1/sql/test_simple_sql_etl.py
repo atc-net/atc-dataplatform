@@ -19,7 +19,7 @@ from atc.functions import get_unique_tempview_name
 from atc.spark import Spark
 from atc.transformers.simple_sql_transformer import SimpleSqlServerTransformer
 from atc.utils import DataframeCreator
-from tests.cluster.sql.DeliverySqlServer import DeliverySqlServer
+from tests.cluster.job1.sql.DeliverySqlServer import DeliverySqlServer
 
 
 class SimpleSqlServerETLTests(DataframeTestCase):
