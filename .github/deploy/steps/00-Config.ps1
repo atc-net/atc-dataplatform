@@ -21,6 +21,7 @@ $resourceGroupName            = $resourceName
 
 
 $databricksName               = $resourceName
+$accesConName                 = $resourceName+"-dbaccessconnector"
 $dataLakeName                 = $resourceName
 $databaseServerName           = $resourceName + "test"
 $deliveryDatabase             = "Delivery"
@@ -103,6 +104,7 @@ Write-Host "* Azure SQL database              : $deliveryDatabase" -ForegroundCo
 Write-Host "* Azure EventHubs Namespace       : $ehNamespace" -ForegroundColor White
 Write-Host "* Azure CosmosDb name             : $cosmosName" -ForegroundColor White
 Write-Host "* Mounting SPN Name               : $mountSpnName" -ForegroundColor White
+Write-Host "* DB Access Connector name        : $accesConName" -ForegroundColor White
 Write-Host "**********************************************************************" -ForegroundColor White
 
 
